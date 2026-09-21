@@ -40,9 +40,13 @@
 .comparison-table th:nth-child(1){width:12%}.comparison-table th:nth-child(2){width:29%}.comparison-table th:nth-child(3){width:27%}.comparison-table th:nth-child(4){width:32%}
 .journey-table th{color:#173d5c;font-weight:850}.journey-table td{color:#173d5c}
 .chart-label{font-size:13px;font-weight:800;fill:#173d5c}.chart-value{font-size:14px;font-weight:900;fill:#08756d}.chart-legend{font-size:13px;font-weight:800;fill:#244b69}
-/* Carrowmont tool breadcrumb */
-.tool-breadcrumb{padding-top:18px;padding-bottom:0;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.78rem}
-.tool-breadcrumb a{color:var(--teal-dark,#08756d);text-decoration:none;font-weight:820}
-.tool-breadcrumb a:hover{text-decoration:underline}
-.intro .tool-breadcrumb + .intro-grid{padding-top:42px}
-@media(max-width:720px){.tool-breadcrumb{padding-top:12px}.intro .tool-breadcrumb + .intro-grid{padding-top:30px}}
+
+/* Standard Carrowmont locale control */
+.locale-menu summary{appearance:none;-webkit-appearance:none;min-width:170px;display:flex;align-items:center;justify-content:center;gap:9px;line-height:1;padding:12px 18px}
+.locale-menu summary::marker{content:""}.locale-menu summary::-webkit-details-marker{display:none}
+.locale-globe{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;line-height:0;transform:none}
+.locale-globe svg{width:18px;height:18px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#localeCurrent{display:inline-flex;align-items:center;line-height:1.1}
+.locale-chevron{width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px;font-size:0}
+.locale-chevron svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:720px){.locale-menu summary{min-width:auto;padding:9px 11px;font-size:13px}}
