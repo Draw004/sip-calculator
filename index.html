@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIP Calculator | Carrowmont</title>
+  <meta name="description" content="Estimate SIP future value, calculate the monthly SIP required for a goal, estimate time to a target corpus, compare fixed and step-up SIPs, and include existing investments." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://carrowmont.com/sip-calculator/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta property="og:site_name" content="Carrowmont" />
+  <meta property="og:title" content="SIP Calculator | Carrowmont" />
+  <meta property="og:description" content="Explore SIP growth, step-up contributions and the monthly investment required for a future goal." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://carrowmont.com/sip-calculator/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="theme-color" content="#0e827a" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont SIP Calculator","url":"https://carrowmont.com/sip-calculator/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational SIP calculator for estimating recurring-investment growth, step-up SIP outcomes and goal-based monthly investment requirements."}</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <div class="brand-cluster">
+      <a class="brand" href="/" aria-label="Carrowmont home">CARROWMONT</a>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="product-label">SIP Calculator</span>
+    </div>
+    <div class="header-actions">
+      <nav class="top-nav" aria-label="Primary navigation">
+        <a href="#calculator">Calculator</a><a href="#how">How it works</a><a href="#methodology">Methodology</a><a href="/#tools">All tools</a><a href="/">Home</a>
+      </nav>
+      <details class="locale-menu" id="localeMenu">
+        <summary id="localeSummary" aria-label="Choose country and currency"><span class="locale-globe" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 4.5 6 4.5 9S15 18 12 21c-3-3-4.5-6-4.5-9S9 6 12 3z"/></svg></span><span id="localeCurrent">India · INR</span><span class="locale-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+        <div class="locale-popover">
+          <h3>Country &amp; currency</h3><p>Choose the context that makes the numbers easiest to understand.</p>
+          <label>Country / region<select id="regionSelect"></select></label>
+          <label>Currency<select id="currencySelect"></select></label>
+          <div class="locale-note"><strong>Important:</strong> Changing currency changes the unit and number format. It does not convert entered amounts using an exchange rate.</div>
+          <button class="btn btn-primary btn-small" id="localeDone" type="button">Done</button>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="intro">
+  <div class="container intro-grid">
+    <div>
+      <div class="eyebrow">SIP &amp; MONTHLY INVESTING</div>
+      <div class="india-badge" id="indiaBadge">POPULAR IN INDIA</div>
+      <h1>See how a monthly SIP may grow or what SIP may be required for a goal.</h1>
+      <p class="lede">Estimate future value, include existing investments, model an annual step-up, work backwards from a goal, or estimate how long a target corpus may take.</p>
+      <div class="chips"><span>SIP future value</span><span>Goal SIP</span><span>Time to target</span><span>Step-up SIP</span><span>Existing lump sum</span><span>Country-aware currencies</span></div>
+    </div>
+    <div class="intro-card">
+      <div class="eyebrow">THE IDEA</div>
+      <div class="mini-flow"><strong>Monthly SIP</strong><span>→</span><strong>Investment growth</strong><span>→</span><strong>Future value</strong></div>
+      <p>A SIP is a recurring investment method. This calculator models the arithmetic of regular contributions and assumed returns; it does not predict or guarantee investment performance.</p>
+    </div>
+  </div>
+</section>
+
+<section class="planner-shell" id="calculator">
+  <div class="container planner-grid">
+    <section class="planner-card">
+      <div class="section-head"><div><div class="eyebrow">YOUR CALCULATION</div><h2>Build the assumptions</h2></div><button class="text-btn" id="resetBtn" type="button">Reset</button></div>
+
+      <div class="mode-tabs" role="tablist" aria-label="Calculator mode">
+        <button class="mode-tab active" id="growthTab" type="button" data-mode="growth" role="tab" aria-selected="true">SIP future value</button>
+        <button class="mode-tab" id="goalTab" type="button" data-mode="goal" role="tab" aria-selected="false">SIP required for a goal</button>
+        <button class="mode-tab" id="targetTab" type="button" data-mode="target" role="tab" aria-selected="false">Time to target</button>
+      </div>
+
+      <div class="step goal-only" id="goalInputs" hidden>
+        <div class="step-title"><span id="goalStepNum">1</span><div><h3>Goal target</h3><p>Choose whether the goal is an amount in today's money or a future target amount you already know.</p></div></div>
+        <div class="fields">
+          <label class="field"><span>How do you want to enter the goal?</span><select id="goalBasis"><option value="today">Today's amount + inflation</option><option value="future">Future target amount directly</option></select><small>This makes the source of the future goal amount explicit.</small></label>
+          <label class="field" id="goalTodayField"><span>Goal amount today</span><div class="money-input"><span class="currency-prefix">₹</span><input id="goalToday" type="number" min="0" step="10000" value="5000000" /></div><small>Example: today's estimated cost of education, a home or another future goal.</small></label>
+          <label class="field" id="inflationField"><span>Inflation / price-growth assumption</span><div class="input-suffix"><input id="inflation" type="number" min="0" max="25" step="0.1" value="6" /><span>% p.a.</span></div><small>Used to grow today's amount to the selected future date.</small></label>
+          <label class="field" id="goalFutureField" hidden><span>Future target amount</span><div class="money-input"><span class="currency-prefix">₹</span><input id="goalFuture" type="number" min="0" step="10000" value="10000000" /></div><small id="goalFutureHint">Enter the nominal amount you want at the selected future date.</small></label>
+        </div>
+      </div>
+
+      <div class="step target-only" id="targetInputs" hidden>
+        <div class="step-title"><span>1</span><div><h3>Target corpus</h3><p>Enter the future corpus you want to reach. The calculator estimates how long the current SIP path may take.</p></div></div>
+        <div class="fields">
+          <label class="field"><span>Target amount</span><div class="money-input"><span class="currency-prefix">₹</span><input id="targetAmount" type="number" min="0" step="10000" value="10000000" /></div><small id="targetAmountHint">Enter the future nominal target directly.</small></label>
+        </div>
+      </div>
+
+      <div class="step" id="investmentStep">
+        <div class="step-title"><span id="investmentStepNum">1</span><div><h3>Investment plan</h3><p>Enter your current investment amount and the recurring monthly contribution you want to model.</p></div></div>
+        <div class="fields">
+          <label class="field"><span>Existing invested amount</span><div class="money-input"><span class="currency-prefix">₹</span><input id="currentSavings" type="number" min="0" step="1000" value="100000" /></div><small>Optional amount already invested before starting this SIP. If you have not invested anything yet, keep this at zero.</small></label>
+          <label class="field"><span>Current monthly SIP</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlySIP" type="number" min="0" step="500" value="10000" /></div><small>The starting monthly contribution.</small></label>
+          <label class="field" id="yearsField"><span>Investment period</span><div class="input-suffix"><input id="years" type="number" min="1" max="50" step="1" value="15" /><span>years</span></div><small>Used for future-value and required-SIP calculations.</small></label>
+          <label class="field"><span>Expected annual investment return</span><div class="input-suffix"><input id="annualReturn" type="number" min="0" max="30" step="0.1" value="12" /><span>% p.a.</span></div><small>A constant modelling assumption, not a guaranteed return.</small></label>
+          <label class="field"><span>Annual increase in monthly SIP</span><div class="input-suffix"><input id="annualStepUp" type="number" min="0" max="50" step="0.5" value="10" /><span>% / yr</span></div><small>Models a step-up once each year. Use 0% for a fixed SIP.</small></label>
+        </div>
+      </div>
+    </section>
+
+    <aside class="snapshot" aria-live="polite">
+      <div class="eyebrow">YOUR ESTIMATE</div>
+      <h2 id="snapshotTitle">SIP growth snapshot</h2>
+      <div class="pill" id="periodPill">15-year plan</div>
+
+      <div class="hero-result" id="heroResult">
+        <span id="heroLabel">Estimated value after 15 years</span>
+        <strong id="heroValue">₹0</strong>
+        <small id="heroNote">Based on your existing investment, monthly SIP, step-up and return assumption</small>
+      </div>
+
+      <dl class="metrics growth-metrics" id="growthMetrics">
+        <div><dt>Total amount invested</dt><dd id="totalInvested">₹0</dd></div>
+        <div><dt>Estimated investment growth</dt><dd id="estimatedGrowth">₹0</dd></div>
+        <div><dt>Value with a fixed SIP</dt><dd id="fixedValue">₹0</dd></div>
+        <div><dt>Benefit from the selected step-up</dt><dd id="stepUpBenefit">₹0</dd></div>
+      </dl>
+
+      <dl class="metrics goal-metrics" id="goalMetrics" hidden>
+        <div><dt>Goal amount at selected date (future money)</dt><dd id="futureGoal">₹0</dd></div>
+        <div><dt>Projected value of current plan at goal date</dt><dd id="currentPlanValue">₹0</dd></div>
+        <div><dt>Total monthly SIP required from now</dt><dd id="requiredSIP">₹0</dd></div>
+        <div><dt>Additional monthly SIP required</dt><dd id="additionalSIP">₹0</dd></div>
+      </dl>
+
+      <dl class="metrics target-metrics" id="targetMetrics" hidden>
+        <div><dt>Target corpus</dt><dd id="targetCorpusValue">₹0</dd></div>
+        <div><dt>Estimated time to target</dt><dd id="timeToTargetValue">-</dd></div>
+        <div><dt>Total money invested by then</dt><dd id="targetTotalInvested">₹0</dd></div>
+        <div><dt>Estimated investment growth</dt><dd id="targetGrowthValue">₹0</dd></div>
+      </dl>
+
+      <div class="funding-box" id="fundingBox" hidden>
+        <div><span>Projected funding from current plan</span><strong id="fundingPct">0%</strong></div>
+        <div class="bar"><i id="fundingBar" style="width:0%"></i></div>
+        <p id="fundingText"></p>
+      </div>
+
+      <div class="action-ribbon" id="actionRibbon" hidden>
+        <span>Additional monthly SIP required</span><strong id="actionValue">₹0</strong>
+      </div>
+
+      <div class="snapshot-actions"><button class="btn btn-outline" id="copyBtn" type="button">Copy Summary</button><button class="btn btn-primary" id="reportBtn" type="button">Generate SIP Report</button></div>
+      <p class="fineprint">Illustrative planning tool only. Actual investment returns, costs, taxes and goal prices may differ from the assumptions entered.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="visuals">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">VISUAL PLAN</div><h2 id="visualTitle">See how the SIP may build over time</h2></div><p id="visualNote">Charts update automatically as you change the assumptions.</p></div>
+    <div class="summary-row" id="summaryRow"></div>
+    <div class="chart-grid">
+      <article class="chart-card"><div class="chart-head"><div><div class="eyebrow" id="chart1Eyebrow">PORTFOLIO BUILD</div><h3 id="chart1Title">Projected value vs money invested</h3></div><p id="chart1Note">See how investment growth may compound over time.</p></div><svg id="chart1" viewBox="0 0 760 380" role="img" aria-label="Projected SIP growth chart"></svg></article>
+      <article class="chart-card"><div class="chart-head"><div><div class="eyebrow" id="chart2Eyebrow">STEP-UP COMPARISON</div><h3 id="chart2Title">Step-up SIP vs fixed SIP</h3></div><p id="chart2Note">Same return and period; only the annual SIP increase changes.</p></div><svg id="chart2" viewBox="0 0 760 380" role="img" aria-label="SIP comparison chart"></svg></article>
+    </div>
+  </div>
+</section>
+
+<section class="journey" id="journey">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">YEAR-BY-YEAR SIP JOURNEY</div><h2>See how contributions and growth build over time</h2></div><p>Follow the monthly SIP, money invested and modelled portfolio value for every year of the plan.</p></div>
+    <div class="journey-summary" id="journeySummary"></div>
+    <details class="journey-details" id="journeyDetails">
+      <summary><span>View full yearly breakdown</span><small id="journeyCount"></small></summary>
+      <div class="table-scroll">
+        <table class="journey-table">
+          <thead id="journeyHead"></thead>
+          <tbody id="journeyBody"></tbody>
+        </table>
+      </div>
+      <p class="journey-note" id="journeyNote"></p>
+    </details>
+    <details class="journey-details comparison-details" id="comparisonDetails">
+      <summary><span>Compare step-up SIP with fixed SIP year by year</span><small id="comparisonCount"></small></summary>
+      <div class="table-scroll">
+        <table class="journey-table comparison-table">
+          <thead><tr><th>Year</th><th>Step-up SIP projected value</th><th>Fixed SIP projected value</th><th>Additional value from step-up</th></tr></thead>
+          <tbody id="comparisonBody"></tbody>
+        </table>
+      </div>
+      <p class="journey-note">Both paths use the same existing investment, assumed return and time period. Only the annual SIP increase changes.</p>
+    </details>
+  </div>
+</section>
+
+<section class="insights" id="insights">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">PLAN INSIGHTS</div><h2>What the assumptions are doing</h2></div><p>These are arithmetic observations from the entered assumptions, not personalized investment advice.</p></div>
+    <div class="insight-grid" id="insightGrid"></div>
+  </div>
+</section>
+
+<section class="scenarios">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">WHAT IF?</div><h2 id="scenarioTitle">Compare investment periods</h2></div><p id="scenarioNote">Same SIP, return and step-up assumptions; only the time horizon changes.</p></div>
+    <div class="scenario-grid" id="scenarioGrid"></div>
+  </div>
+</section>
+
+<section class="how" id="how"><div class="container two-col"><div><div class="eyebrow">HOW IT WORKS</div><h2>Separate contributions from investment growth.</h2></div><div><p>A recurring SIP is added monthly while the invested balance compounds using the monthly rate implied by the annual return assumption. If a step-up is entered, the monthly contribution increases once each year.</p><p>In goal mode, Carrowmont can either grow an amount entered in today’s money using the inflation / price-growth assumption or use a future target amount directly, then solve for the starting monthly SIP required.</p><p>In Time to target mode, you enter the target corpus and your SIP assumptions; the calculator estimates the first modelled month in which the portfolio reaches that target.</p></div></div></section>
+
+<section class="methodology" id="methodology"><div class="container two-col"><div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div><div><p><strong>Monthly return:</strong> The annual return assumption is converted to the equivalent monthly compound rate.</p><p><strong>SIP projection:</strong> Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.</p><p><strong>Future goal amount:</strong> Either today’s goal amount × (1 + inflation / price growth)<sup>years</sup>, or a future target entered directly.</p><p><strong>Monthly SIP required:</strong> The starting monthly contribution that would model to the selected future goal while applying the entered annual step-up. It is solved numerically.</p><p><strong>Time to target:</strong> The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.</p><div class="method-note"><strong>Important:</strong> SIP is a contribution method, not a guaranteed-return product. This calculator does not model market volatility, sequence of returns, taxes, fees, product-specific costs or investment suitability.</div></div></div></section>
+</main>
+
+<footer class="site-footer"><div class="container"><div class="footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/financial-independence/">Financial Independence</a><a href="/sip-calculator/">SIP Calculator</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="footer-bottom"><span>© 2026 Carrowmont</span><span>Educational tools only · No sign-up required</span></div></div></footer>
+
+<script src="locale.js"></script><script src="core.js"></script><script src="pdf-export.js"></script>
+<script src="sip-pdf-renderer.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

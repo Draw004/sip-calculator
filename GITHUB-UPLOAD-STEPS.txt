@@ -1,0 +1,41 @@
+CARROWMONT SIP CALCULATOR - GITHUB DEPLOYMENT
+
+Repository name:
+sip-calculator
+
+IMPORTANT WHEN CREATING THE REPOSITORY
+- Create it as Public.
+- Do NOT initialize it with a README, .gitignore or license, because this package already contains README.md.
+
+UPLOAD THESE FILES TO THE REPOSITORY ROOT
+- index.html
+- styles.css
+- app.js
+- core.js
+- locale.js
+- pdf-export.js
+- sip-pdf-renderer.js
+- README.md
+
+Suggested commit message:
+Add Carrowmont SIP Calculator v1.0.0
+
+ENABLE GITHUB PAGES
+1. Repository -> Settings -> Pages.
+2. Source: Deploy from a branch.
+3. Branch: main.
+4. Folder: / (root).
+5. Click Save.
+
+After deployment, check:
+https://carrowmont.com/sip-calculator/
+
+FINAL LIVE CHECKS
+- SIP future value
+- SIP required for a goal
+- Time to target
+- India / INR formatting
+- One non-India currency (for example United States / USD)
+- Copy Summary
+- Generate SIP Report
+- PDF download in Edge and Chrome
