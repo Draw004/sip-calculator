@@ -244,22 +244,24 @@
 
 
   async function createReport(){
-    const b=$('reportBtn');
+    const b=$('reportBtn'),status=document.getElementById('reportDownloadStatus');
     if(!window.CarrowmontSIPPdfRenderer||!window.CarrowmontPdfExport||!latestResult){
-      alert('The SIP report is not available yet. Please refresh the page and try again.');
+      if(status)status.textContent='The report could not be generated. Please refresh the page and try again.';
       return;
     }
-    const old=b.textContent;b.disabled=true;b.textContent='Generating Report...';
+    b.disabled=true;b.setAttribute('aria-busy','true');
+    if(status)status.textContent='Preparing your report...';
     try{
       const canvases=await window.CarrowmontSIPPdfRenderer.render(latestResult,mode);
-      const now=new Date();
-      const pad=n=>String(n).padStart(2,'0');
+      const now=new Date(),pad=n=>String(n).padStart(2,'0');
       const filename=`sip-report-${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
       await window.CarrowmontPdfExport.downloadCanvases(canvases,{filename,quality:.97});
-      b.textContent='✓ Report Downloaded';
-      setTimeout(()=>{b.textContent=old;b.disabled=false;},1800);
+      if(status)status.textContent='Report has been downloaded.';
     }catch(err){
-      console.error(err);b.disabled=false;b.textContent=old;alert('Could not create the SIP report. Please try again.');
+      console.error(err);
+      if(status)status.textContent='The report could not be generated. Please refresh the page and try again.';
+    }finally{
+      b.disabled=false;b.removeAttribute('aria-busy');
     }
   }
 
