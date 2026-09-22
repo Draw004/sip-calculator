@@ -239,6 +239,7 @@
     else if(mode==='goal') text+=`${r.state.goalBasis==='future'?`Future target amount: ${money(r.target)}`:`Goal amount today: ${money(r.state.goalToday)}\nInflation / price growth: ${(r.state.inflation*100).toFixed(1)}% p.a.`}\nGoal date: ${r.state.years} years\nExpected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.\n\nFuture goal amount: ${money(r.target)}\nProjected current plan: ${money(r.current.portfolio)}\nProjected funding: ${pct(r.funding)}\nTotal monthly SIP required: ${money(r.requiredMonthly)}\nAdditional monthly SIP required: ${money(r.additionalMonthly)}\n`;
     else text+=`Target corpus: ${money(r.target)}\nCurrent monthly SIP: ${money(r.state.monthlySIP)}\nExpected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.\nAnnual SIP step-up: ${(r.state.annualStepUp*100).toFixed(1)}%\n\nEstimated time to target: ${formatDuration(r.months,r.reached)}\nTotal money invested by then: ${money(r.totalInvested)}\nEstimated investment growth: ${money(r.growth)}\n`;
     text+='\nEducational illustration only. Returns are not guaranteed.';
+    if(window.CarrowmontInvestmentTerminology) text=window.CarrowmontInvestmentTerminology.text(text);
     navigator.clipboard?.writeText(text).then(()=>{const b=$('copyBtn'),old=b.textContent;b.textContent='✓ Summary Copied';setTimeout(()=>b.textContent=old,1800);});
   }
 
@@ -254,7 +255,8 @@
     try{
       const canvases=await window.CarrowmontSIPPdfRenderer.render(latestResult,mode);
       const now=new Date(),pad=n=>String(n).padStart(2,'0');
-      const filename=`sip-report-${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
+      const reportStem=window.CarrowmontInvestmentTerminology?.isIndia()?'sip-report':'monthly-investment-report';
+      const filename=`${reportStem}-${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
       await window.CarrowmontPdfExport.downloadCanvases(canvases,{filename,quality:.97});
       if(status)status.textContent='Report has been downloaded.';
     }catch(err){
