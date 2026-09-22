@@ -98,7 +98,7 @@
           <label class="field"><span>Current monthly SIP</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlySIP" type="number" min="0" step="500" value="10000" /></div><small>The starting monthly contribution.</small></label>
           <label class="field" id="yearsField"><span>Investment period</span><div class="input-suffix"><input id="years" type="number" min="1" max="50" step="1" value="15" /><span>years</span></div><small>Used for future-value and required-SIP calculations.</small></label>
           <label class="field"><span>Expected annual investment return</span><div class="input-suffix"><input id="annualReturn" type="number" min="0" max="30" step="0.1" value="12" /><span>% p.a.</span></div><small>A constant modelling assumption, not a guaranteed return.</small></label>
-          <label class="field"><span>Annual increase in monthly SIP</span><div class="input-suffix"><input id="annualStepUp" type="number" min="0" max="50" step="0.5" value="10" /><span>% / yr</span></div><small>Models a step-up once each year. Use 0% for a fixed SIP.</small></label>
+          <label class="field"><span>Annual increase in monthly SIP</span><div class="input-suffix"><input id="annualStepUp" type="number" min="0" max="100" step="0.5" value="10" /><span>% / yr</span></div><small>Models a step-up once each year. Use 0% for a fixed SIP.</small></label>
         </div>
       </div>
     </section>
@@ -211,7 +211,7 @@
 
 <footer class="site-footer"><div class="container"><div class="footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/financial-independence/">Financial Independence</a><a href="/sip-calculator/">SIP Calculator</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="footer-bottom"><span>© 2026 Carrowmont</span><span>Educational tools only · No sign-up required</span></div></div></footer>
 
-<script src="locale.js"></script><script src="core.js"></script><script src="pdf-export.js"></script><script src="terminology.js?v=20260922.1"></script>
+<script src="locale.js"></script><script src="core.js?v=20260922.2"></script><script src="pdf-export.js"></script><script src="terminology.js?v=20260922.1"></script>
 <script src="sip-pdf-renderer.js?v=20260922.4"></script>
 <script src="app.js?v=20260922.6"></script>
 </body>

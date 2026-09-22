@@ -17,7 +17,7 @@
       currentSavings: Math.max(0,Number(raw.currentSavings)||0),
       monthlySIP: Math.max(0,Number(raw.monthlySIP)||0),
       annualReturn: clamp(raw.annualReturn,0,30)/100,
-      annualStepUp: clamp(raw.annualStepUp,0,50)/100,
+      annualStepUp: clamp(raw.annualStepUp,0,100)/100,
       goalToday: Math.max(0,Number(raw.goalToday)||0),
       goalBasis: raw.goalBasis==='future'?'future':'today',
       goalFuture: Math.max(0,Number(raw.goalFuture)||0),
@@ -35,7 +35,7 @@
     const s=normalize(raw);
     const years=Number.isFinite(Number(yearsOverride))?clamp(yearsOverride,0,50):s.years;
     const base=Number.isFinite(Number(baseOverride))?Math.max(0,Number(baseOverride)):s.monthlySIP;
-    const step=Number.isFinite(Number(stepOverride))?clamp(stepOverride,0,50)/100:s.annualStepUp;
+    const step=Number.isFinite(Number(stepOverride))?clamp(stepOverride,0,100)/100:s.annualStepUp;
     const months=Math.max(0,Math.round(years*12));
     const rm=monthlyRate(s.annualReturn);
     let portfolio=s.currentSavings;
@@ -101,7 +101,7 @@
     const s=normalize({...raw,mode:'target'});
     const target=s.targetAmount;
     const base=Number.isFinite(Number(baseOverride))?Math.max(0,Number(baseOverride)):s.monthlySIP;
-    const step=Number.isFinite(Number(stepOverride))?clamp(stepOverride,0,50)/100:s.annualStepUp;
+    const step=Number.isFinite(Number(stepOverride))?clamp(stepOverride,0,100)/100:s.annualStepUp;
     const rm=monthlyRate(s.annualReturn);
     let portfolio=s.currentSavings,contributions=0;
     if(target<=0) return {reached:false,months:0,years:0,portfolio,totalInvested:s.currentSavings,growth:0,target};
