@@ -49,16 +49,16 @@
   <div class="container tool-breadcrumb"><a href="/#tools">← Back to all Carrowmont tools</a></div>
   <div class="container intro-grid">
     <div>
-      <div class="eyebrow">SIP &amp; MONTHLY INVESTING</div>
+      <div class="eyebrow" id="introEyebrow">SIP &amp; MONTHLY INVESTING</div>
       <div class="india-badge" id="indiaBadge">POPULAR IN INDIA</div>
-      <h1>See how a monthly SIP may grow or what SIP may be required for a goal.</h1>
+      <h1 id="introHeadline">See how a monthly SIP may grow or what SIP may be required for a goal.</h1>
       <p class="lede">Estimate future value, include existing investments, model an annual step-up, work backwards from a goal, or estimate how long a target corpus may take.</p>
       <div class="chips"><span>SIP future value</span><span>Goal SIP</span><span>Time to target</span><span>Step-up SIP</span><span>Existing lump sum</span><span>Country-aware currencies</span></div>
     </div>
     <div class="intro-card">
       <div class="eyebrow">THE IDEA</div>
-      <div class="mini-flow"><strong>Monthly SIP</strong><span>→</span><strong>Investment growth</strong><span>→</span><strong>Future value</strong></div>
-      <p>A SIP is a recurring investment method. This calculator models the arithmetic of regular contributions and assumed returns; it does not predict or guarantee investment performance.</p>
+      <div class="mini-flow"><strong id="ideaContribution">Monthly SIP</strong><span>→</span><strong>Investment growth</strong><span>→</span><strong>Future value</strong></div>
+      <p id="ideaDescription">A SIP is a recurring investment method. This calculator models the arithmetic of regular contributions and assumed returns; it does not predict or guarantee investment performance.</p>
     </div>
   </div>
 </section>
@@ -92,13 +92,14 @@
       </div>
 
       <div class="step" id="investmentStep">
-        <div class="step-title"><span id="investmentStepNum">1</span><div><h3>Investment plan</h3><p>Enter your current investment amount and the recurring monthly contribution you want to model.</p></div></div>
+        <div class="step-title"><span id="investmentStepNum">1</span><div><h3>Investment plan</h3><p id="investmentIntro">Enter your current investment amount and the recurring monthly contribution you want to model.</p></div></div>
         <div class="fields">
           <label class="field"><span>Existing invested amount</span><div class="money-input"><span class="currency-prefix">₹</span><input id="currentSavings" type="number" min="0" step="1000" value="100000" /></div><small>Optional amount already invested before starting this SIP. If you have not invested anything yet, keep this at zero.</small></label>
-          <label class="field"><span>Current monthly SIP</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlySIP" type="number" min="0" step="500" value="10000" /></div><small>The starting monthly contribution.</small></label>
+          <label class="field"><span id="sipAmountLabel">Current monthly SIP</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlySIP" type="number" min="0" step="500" value="10000" /></div><small id="sipAmountHint">The starting monthly contribution.</small></label>
+          <label class="field"><span>Contribution frequency</span><select id="contributionFrequency"><option value="weekly">Weekly</option><option value="biweekly">Fortnightly (Every 2 Weeks)</option><option value="semimonthly">Twice Monthly</option><option value="fourweekly">Every 4 Weeks</option><option value="monthly" selected>Monthly</option></select><small>Choose how often this contribution is invested. Country sets only the suggested default.</small></label>
           <label class="field" id="yearsField"><span>Investment period</span><div class="input-suffix"><input id="years" type="number" min="1" max="50" step="1" value="15" /><span>years</span></div><small>Used for future-value and required-SIP calculations.</small></label>
           <label class="field"><span>Expected annual investment return</span><div class="input-suffix"><input id="annualReturn" type="number" min="0" max="30" step="0.1" value="12" /><span>% p.a.</span></div><small>A constant modelling assumption, not a guaranteed return.</small></label>
-          <label class="field"><span>Annual increase in monthly SIP</span><div class="input-suffix"><input id="annualStepUp" type="number" min="0" max="100" step="0.5" value="10" /><span>% / yr</span></div><small>Models a step-up once each year. Use 0% for a fixed SIP.</small></label>
+          <label class="field"><span id="stepUpLabel">Annual increase in monthly SIP</span><div class="input-suffix"><input id="annualStepUp" type="number" min="0" max="100" step="0.5" value="10" /><span>% / yr</span></div><small>Models a step-up once each year. Use 0% for a fixed SIP.</small></label>
         </div>
       </div>
     </section>
@@ -124,8 +125,8 @@
       <dl class="metrics goal-metrics" id="goalMetrics" hidden>
         <div><dt>Goal amount at selected date (future money)</dt><dd id="futureGoal">₹0</dd></div>
         <div><dt>Projected value of current plan at goal date</dt><dd id="currentPlanValue">₹0</dd></div>
-        <div><dt>Total monthly SIP required from now</dt><dd id="requiredSIP">₹0</dd></div>
-        <div><dt>Additional monthly SIP required</dt><dd id="additionalSIP">₹0</dd></div>
+        <div><dt id="requiredSIPLabel">Total monthly SIP required from now</dt><dd id="requiredSIP">₹0</dd></div>
+        <div><dt id="additionalSIPLabel">Additional monthly SIP required</dt><dd id="additionalSIP">₹0</dd></div>
       </dl>
 
       <dl class="metrics target-metrics" id="targetMetrics" hidden>
@@ -142,7 +143,7 @@
       </div>
 
       <div class="action-ribbon" id="actionRibbon" hidden>
-        <span>Additional monthly SIP required</span><strong id="actionValue">₹0</strong>
+        <span id="actionRibbonLabel">Additional monthly SIP required</span><strong id="actionValue">₹0</strong>
       </div>
 
       <div class="snapshot-actions"><button class="btn btn-outline" id="copyBtn" type="button">Copy Summary</button><button class="btn btn-primary" id="reportBtn" type="button">Generate SIP Report</button></div>
@@ -165,7 +166,7 @@
 
 <section class="journey" id="journey">
   <div class="container">
-    <div class="section-head wide"><div><div class="eyebrow">YEAR-BY-YEAR SIP JOURNEY</div><h2>See how contributions and growth build over time</h2></div><p>Follow the monthly SIP, money invested and modelled portfolio value for every year of the plan.</p></div>
+    <div class="section-head wide"><div><div class="eyebrow">YEAR-BY-YEAR SIP JOURNEY</div><h2>See how contributions and growth build over time</h2></div><p id="journeyIntro">Follow the monthly SIP, money invested and modelled portfolio value for every year of the plan.</p></div>
     <div class="journey-summary" id="journeySummary"></div>
     <details class="journey-details" id="journeyDetails">
       <summary><span>View full yearly breakdown</span><small id="journeyCount"></small></summary>
@@ -204,9 +205,9 @@
   </div>
 </section>
 
-<section class="how" id="how"><div class="container two-col"><div><div class="eyebrow">HOW IT WORKS</div><h2>Separate contributions from investment growth.</h2></div><div><p>A recurring SIP is added monthly while the invested balance compounds using the monthly rate implied by the annual return assumption. If a step-up is entered, the monthly contribution increases once each year.</p><p>In goal mode, Carrowmont can either grow an amount entered in today’s money using the inflation / price-growth assumption or use a future target amount directly, then solve for the starting monthly SIP required.</p><p>In Time to target mode, you enter the target corpus and your SIP assumptions; the calculator estimates the first modelled month in which the portfolio reaches that target.</p></div></div></section>
+<section class="how" id="how"><div class="container two-col"><div><div class="eyebrow">HOW IT WORKS</div><h2>Separate contributions from investment growth.</h2></div><div><p id="howProjection">A recurring SIP is added monthly while the invested balance compounds using the monthly rate implied by the annual return assumption. If a step-up is entered, the monthly contribution increases once each year.</p><p id="howGoal">In goal mode, Carrowmont can either grow an amount entered in today’s money using the inflation / price-growth assumption or use a future target amount directly, then solve for the starting monthly SIP required.</p><p id="howTarget">In Time to target mode, you enter the target corpus and your SIP assumptions; the calculator estimates the first modelled month in which the portfolio reaches that target.</p></div></div></section>
 
-<section class="methodology" id="methodology"><div class="container two-col"><div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div><div><p><strong>Monthly return:</strong> The annual return assumption is converted to the equivalent monthly compound rate.</p><p><strong>SIP projection:</strong> Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.</p><p><strong>Future goal amount:</strong> Either today’s goal amount × (1 + inflation / price growth)<sup>years</sup>, or a future target entered directly.</p><p><strong>Monthly SIP required:</strong> The starting monthly contribution that would model to the selected future goal while applying the entered annual step-up. It is solved numerically.</p><p><strong>Time to target:</strong> The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.</p><div class="method-note"><strong>Important:</strong> SIP is a contribution method, not a guaranteed-return product. This calculator does not model market volatility, sequence of returns, taxes, fees, product-specific costs or investment suitability.</div></div></div></section>
+<section class="methodology" id="methodology"><div class="container two-col"><div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div><div><p id="methodRate"><strong>Monthly return:</strong> The annual return assumption is converted to the equivalent monthly compound rate.</p><p id="methodProjection"><strong>SIP projection:</strong> Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.</p><p><strong>Future goal amount:</strong> Either today’s goal amount × (1 + inflation / price growth)<sup>years</sup>, or a future target entered directly.</p><p id="methodRequired"><strong>Monthly SIP required:</strong> The starting monthly contribution that would model to the selected future goal while applying the entered annual step-up. It is solved numerically.</p><p id="methodTarget"><strong>Time to target:</strong> The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.</p><div class="method-note"><strong>Important:</strong> SIP is a contribution method, not a guaranteed-return product. This calculator does not model market volatility, sequence of returns, taxes, fees, product-specific costs or investment suitability.</div></div></div></section>
 </main>
 
 <footer class="site-footer"><div class="container"><div class="footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/financial-independence/">Financial Independence</a><a href="/sip-calculator/">SIP Calculator</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="footer-bottom"><span>© 2026 Carrowmont</span><span>Educational tools only · No sign-up required</span></div></div></footer>
