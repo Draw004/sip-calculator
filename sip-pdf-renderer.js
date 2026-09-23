@@ -4,10 +4,13 @@
   const C={ink:'#102945',navy:'#102945',teal:'#0e8b80',tealDark:'#08756d',muted:'#405b75',line:'#c9d9e2',pale:'#e8f6f3',note:'#f3f8fa',amber:'#fff4d9',amberLine:'#edc86b',white:'#fff',light:'#f8fbfc'};
   const W=794,H=1123,M=42,CW=W-M*2;
   const money=v=>L().formatMoney(v,{maximumFractionDigits:0}), compact=v=>L().formatCompactMoney(v,{maximumFractionDigits:2}), pct=v=>`${Math.round(v*100)}%`;
-  const fortnightlyRegions=new Set(['IN','GB','IE','AU','NZ']),biweeklyRegions=new Set(['US','CA']);
+  const frequencyProfile=(region=L().getRegion())=>L().regions[region]||L().regions.OTHER||{};
   const frequencyLabel=(key,region=L().getRegion())=>{
     if(key==='weekly') return 'Weekly';
-    if(key==='biweekly') return fortnightlyRegions.has(region)?'Fortnightly (Every 2 Weeks)':biweeklyRegions.has(region)?'Biweekly (Every 2 Weeks)':'Every 2 Weeks';
+    if(key==='biweekly'){
+      const style=frequencyProfile(region).twoWeekLabel||'neutral';
+      return style==='fortnightly'?'Fortnightly (Every 2 Weeks)':style==='biweekly'?'Biweekly (Every 2 Weeks)':'Every 2 Weeks';
+    }
     if(key==='semimonthly') return 'Twice Monthly';
     if(key==='fourweekly') return 'Every 4 Weeks';
     return 'Monthly';
@@ -18,6 +21,9 @@
   const shortCadence=state=>state.contributionFrequency==='weekly'?'/wk':state.contributionFrequency==='biweekly'?'/2 wks':state.contributionFrequency==='semimonthly'?' · 2x/mo':state.contributionFrequency==='fourweekly'?'/4 wks':'/mo';
   const shortContribution=(value,state)=>`${money(value)}${shortCadence(state)}`;
   const contributionNoun=()=>L().getRegion()==='IN'?'SIP':'investment';
+  const usesNeutralTwoWeekLabel=(region=L().getRegion())=>(frequencyProfile(region).twoWeekLabel||'neutral')==='neutral';
+  const frequencyNounPhrase=(state,noun=contributionNoun())=>state.contributionFrequency==='biweekly'&&usesNeutralTwoWeekLabel()?`${noun} every 2 weeks`:`${frequencyDisplay(state).toLowerCase()} ${noun}`;
+  const titlePhrase=state=>frequencyNounPhrase(state).replace(/^./,c=>c.toUpperCase());
   const isIndiaReport=()=>L().getRegion()==='IN';
   function page(){return P().createPage({width:W,height:H,scale:2.6,background:'#fff'});}function card(ctx,x,y,w,h,fill=C.white,stroke=C.line,r=10){P().roundRect(ctx,x,y,w,h,r,fill,stroke,1);}function hline(ctx,x1,x2,y,color=C.line,width=1){P().line(ctx,x1,y,x2,y,color,width);}
   function header(ctx,mode){P().text(ctx,'CARROWMONT',M,48,{size:14,weight:900,color:C.teal});P().text(ctx,'SIP Planning Report',M,82,{size:26,weight:900,color:C.ink});P().text(ctx,mode==='growth'?'Based on: SIP future value':mode==='goal'?'Based on: SIP required for a goal':'Based on: Time to target',M,104,{size:10.5,weight:600,color:C.muted});const d=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(new Date());P().text(ctx,`Generated ${d}`,W-M,48,{size:10,weight:800,color:C.ink,align:'right'});P().text(ctx,'Educational planning report',W-M,68,{size:9.5,weight:400,color:C.muted,align:'right'});P().text(ctx,'carrowmont.com',W-M,88,{size:9.5,weight:400,color:C.muted,align:'right'});hline(ctx,M,W-M,125,C.navy,2);}
@@ -33,7 +39,7 @@
       ['Expected annual return',`${(s.annualReturn*100).toFixed(1)}% p.a.`],
       [L().getRegion()==='IN'?'Annual SIP step-up':'Annual contribution increase',`${(s.annualStepUp*100).toFixed(1)}% p.a.`],
       ['Existing invested amount',money(s.currentSavings)],
-      [`Current ${display.toLowerCase()} ${noun}`,contributionText(s.monthlySIP,s)],
+      [`Current ${frequencyNounPhrase(s,noun)}`,contributionText(s.monthlySIP,s)],
       ['Contribution frequency',frequencyLabel(s.contributionFrequency)]
     ];
     if(mode==='goal'){
@@ -54,7 +60,7 @@
       [monthly?'Monthly return:':`${display} return:`,monthly?'The annual return assumption is converted to an equivalent monthly compound rate.':'The annual return assumption is converted to the equivalent compound rate for the selected contribution frequency.'],
       [L().getRegion()==='IN'?'SIP projection:':'Investment projection:',monthly?'Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.':'Existing investments grow at the equivalent periodic rate. Contributions are added at the end of each selected contribution period and can increase once each year.'],
       ['Future goal amount:','Either today’s goal amount is grown using the selected price-growth assumption, or a future target amount is entered directly.'],
-      [`${monthly?'Monthly':display} ${contributionNoun()} required:`,monthly?'The starting monthly contribution that models to the selected future goal while applying the entered annual step-up.':'The starting contribution for the selected frequency that models to the selected future goal while applying the entered annual increase.'],
+      [`${monthly?`Monthly ${contributionNoun()}`:titlePhrase(s)} required:`,monthly?'The starting monthly contribution that models to the selected future goal while applying the entered annual step-up.':'The starting contribution for the selected frequency that models to the selected future goal while applying the entered annual increase.'],
       ['Time to target:',monthly?'The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.':'The first modelled contribution period in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.']
     ];
     let yy=y+66;items.forEach(([label,body])=>{P().text(ctx,label,M+12,yy,{size:9.6,weight:850,color:C.ink});P().wrappedText(ctx,body,M+146,yy,CW-158,{size:9.7,lineHeight:12.8,weight:500,color:C.muted,maxLines:2});yy+=28;});
@@ -105,7 +111,7 @@
         cards.forEach((it,i)=>{const x=M+i*(cw+gap);card(ctx,x,y,cw,60,C.white,C.line,8);P().text(ctx,it.label,x+8,y+19,{size:8,weight:600,color:C.muted});P().text(ctx,it.value,x+8,y+45,{size:14.5,weight:850,color:C.ink});});
         y+=80;
       }
-      const contributionHeader=`${display.toUpperCase()} ${noun.toUpperCase()}`;
+      const contributionHeader=frequencyNounPhrase(s,noun).toUpperCase();
       const columns=mode==='growth'
         ?[{label:'YEAR',w:58,key:'year'},{label:contributionHeader,w:112,key:'contribution',align:'right'},{label:'INVESTED DURING YEAR',w:120,key:'yearInvest',align:'right'},{label:'TOTAL INVESTED',w:120,key:'total',align:'right'},{label:'PROJECTED VALUE',w:150,key:'value',align:'right',emphasis:true,color:C.tealDark},{label:'EST. GROWTH',w:150,key:'growth',align:'right',emphasis:true,color:C.tealDark}]
         :mode==='goal'
@@ -134,7 +140,7 @@
       const cols=[{label:'YEAR',w:80,key:'year'},{label:isIndiaReport()?'STEP-UP SIP PROJECTED VALUE':'INCREASING-CONTRIBUTION PROJECTED VALUE',w:210,key:'step',align:'center',headerAlign:'center',emphasis:true,color:C.tealDark},{label:isIndiaReport()?'FIXED SIP PROJECTED VALUE':'FIXED-CONTRIBUTION PROJECTED VALUE',w:200,key:'fixed',align:'center',headerAlign:'center'},{label:'ADDITIONAL VALUE FROM STEP-UP',w:220,key:'diff',align:'center',headerAlign:'center',emphasis:true,color:C.tealDark}];
       const formatted=chunk.map(x=>({year:`Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}`,step:compact(x.projectedValue),fixed:compact(x.fixedProjectedValue),diff:`${x.stepUpDifference>=0?'+':''}${compact(x.stepUpDifference)}`}));
       const y=drawTable(ctx,cols,formatted,164,{highlightLast:ci===totalChunks-1});
-      P().wrappedText(ctx,`The annual-increase path starts at ${contributionText(s.monthlySIP,s)} and increases by ${(s.annualStepUp*100).toFixed(1)}% once each year. The fixed-contribution path keeps the starting ${display.toLowerCase()} contribution unchanged. Both use the same ${(s.annualReturn*100).toFixed(1)}% annual return assumption.`,M,y+26,CW,{size:9,lineHeight:13,weight:400,color:C.muted,maxLines:4});
+      P().wrappedText(ctx,`The annual-increase path starts at ${contributionText(s.monthlySIP,s)} and increases by ${(s.annualStepUp*100).toFixed(1)}% once each year. The fixed-contribution path keeps the starting contribution unchanged at the selected frequency. Both use the same ${(s.annualReturn*100).toFixed(1)}% annual return assumption.`,M,y+26,CW,{size:9,lineHeight:13,weight:400,color:C.muted,maxLines:4});
       P().text(ctx,'CARROWMONT',M,H-34,{size:9.5,weight:900,color:C.teal});P().text(ctx,'Step-up comparison · Educational illustration',W-M,H-34,{size:8.5,weight:400,color:C.muted,align:'right'});
       out.push(pg.canvas);
     }
@@ -171,7 +177,7 @@
       P().text(c,`Based on ${contributionText(s.monthlySIP,s)}, ${(s.annualReturn*100).toFixed(1)}% assumed return and ${(s.annualStepUp*100).toFixed(1)}% annual ${isIndiaReport()?'SIP step-up':'contribution increase'}`,M+18,319,{size:9.2,weight:400,color:'#d7e2eb'});
       const end=statGrid(c,[
         {label:'Existing invested amount',value:compact(s.currentSavings)},
-        {label:`${display} ${noun}`,value:shortContribution(s.monthlySIP,s)},
+        {label:titlePhrase(s),value:shortContribution(s.monthlySIP,s)},
         {label:'Total modelled investment',value:compact(r.projection.totalInvested)},
         {label:'Estimated investment growth',value:compact(r.projection.growth)},
         {label:isIndiaReport()?'Fixed-SIP value':'Fixed-contribution value',value:compact(r.fixedProjection.portfolio)},
@@ -193,17 +199,17 @@
       const end=statGrid(c,[
         {label:s.goalBasis==='future'?'Future target entered':'Goal amount today',value:compact(s.goalBasis==='future'?s.goalFuture:s.goalToday)},
         {label:'Funding gap at goal date',value:compact(r.gap)},
-        {label:`Current ${display.toLowerCase()} ${noun}`,value:shortContribution(s.monthlySIP,s)},
-        {label:`Total ${display.toLowerCase()} ${noun} required`,value:shortContribution(r.requiredContribution,s)},
-        {label:`Additional ${display.toLowerCase()} ${noun} required`,value:shortContribution(r.additionalContribution,s)},
+        {label:`Current ${frequencyNounPhrase(s,noun)}`,value:shortContribution(s.monthlySIP,s)},
+        {label:`Total ${frequencyNounPhrase(s,noun)} required`,value:shortContribution(r.requiredContribution,s)},
+        {label:`Additional ${frequencyNounPhrase(s,noun)} required`,value:shortContribution(r.additionalContribution,s)},
         {label:'Projected funding from current plan',value:pct(r.funding)}
       ],360,3);
       const ry=end+18;
       card(c,M,ry,CW,64,r.additionalContribution>0?C.amber:C.pale,r.additionalContribution>0?C.amberLine:'#b9ddd8',10);
-      P().text(c,`Additional ${display.toLowerCase()} ${noun} required`,M+16,ry+38,{size:10.5,weight:800,color:r.additionalContribution>0?'#704c00':C.tealDark});
+      P().text(c,`Additional ${frequencyNounPhrase(s,noun)} required`,M+16,ry+38,{size:10.5,weight:800,color:r.additionalContribution>0?'#704c00':C.tealDark});
       P().text(c,contributionText(r.additionalContribution,s),W-M-16,ry+40,{size:22,weight:900,color:r.additionalContribution>0?'#704c00':C.tealDark,align:'right'});
       const ay=assumptions(c,r,mode,ry+89);
-      P().wrappedText(c,`Projected funding is based on the current plan - existing savings plus the current ${display.toLowerCase()} ${noun} before any increase. The required-contribution figure is the modelled starting ${display.toLowerCase()} amount under the selected assumptions.`,M,ay+25,CW,{size:9.5,lineHeight:13.5,weight:400,color:C.muted,maxLines:3});
+      P().wrappedText(c,`Projected funding is based on the current plan - existing savings plus the current ${frequencyNounPhrase(s,noun)} before any increase. The required-contribution figure is the modelled starting contribution amount at the selected frequency under the selected assumptions.`,M,ay+25,CW,{size:9.5,lineHeight:13.5,weight:400,color:C.muted,maxLines:3});
     }else{
       P().text(c,'YOUR TARGET',M,159,{size:9,weight:900,color:C.teal});P().text(c,'Time to target',M,188,{size:22,weight:850,color:C.ink});
       card(c,M,216,CW,118,C.navy,null,16);
@@ -214,13 +220,13 @@
       const end=statGrid(c,[
         {label:'Target corpus',value:compact(r.target)},
         {label:'Existing invested amount',value:compact(s.currentSavings)},
-        {label:`Current ${display.toLowerCase()} ${noun}`,value:shortContribution(s.monthlySIP,s)},
+        {label:`Current ${frequencyNounPhrase(s,noun)}`,value:shortContribution(s.monthlySIP,s)},
         {label:'Total money invested by then',value:compact(r.totalInvested)},
         {label:'Estimated investment growth',value:compact(r.growth)},
         {label:'Time saved by step-up',value:r.fixedReached?`${Math.floor(r.timeSavedMonths/12)}y ${r.timeSavedMonths%12}m`:'N/A'}
       ],360,3);
       const ay=assumptions(c,r,mode,end+26);
-      P().wrappedText(c,`This mode solves for time rather than contribution amount. If you instead know the target date and want to calculate the required ${display.toLowerCase()} ${noun}, use the investment-required-for-a-goal mode.`,M,ay+25,CW,{size:9.5,lineHeight:13.5,weight:400,color:C.muted,maxLines:3});
+      P().wrappedText(c,`This mode solves for time rather than contribution amount. If you instead know the target date and want to calculate the required ${frequencyNounPhrase(s,noun)}, use the investment-required-for-a-goal mode.`,M,ay+25,CW,{size:9.5,lineHeight:13.5,weight:400,color:C.muted,maxLines:3});
     }
     const p2=page(),c2=p2.ctx;header(c2,mode);const endChart=await charts(c2,mode,154);methodology(c2,endChart+30,r);
     return [p1.canvas,p2.canvas,...yearlyPages(r,mode),...comparisonPages(r,mode),otherToolsPage()];
