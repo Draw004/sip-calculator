@@ -6,11 +6,50 @@
   const Locale=window.CarrowmontLocale;
   let mode='growth';
   let latestResult=null;
+  let frequencyUserOverride=false;
 
   const defaults={growth:{currentSavings:100000,monthlySIP:10000,years:15,annualReturn:12,annualStepUp:10,goalToday:5000000,goalBasis:'today',goalFuture:10000000,targetAmount:10000000,inflation:6},goal:{currentSavings:500000,monthlySIP:10000,years:15,annualReturn:10,annualStepUp:5,goalToday:5000000,goalBasis:'today',goalFuture:10000000,targetAmount:10000000,inflation:6},target:{currentSavings:500000,monthlySIP:10000,years:15,annualReturn:10,annualStepUp:5,goalToday:5000000,goalBasis:'today',goalFuture:10000000,targetAmount:10000000,inflation:6}};
 
+  const frequencyDefaults={IN:'monthly',US:'biweekly',CA:'biweekly',AU:'biweekly',NZ:'biweekly',PH:'semimonthly'};
+  const frequencyOrder=['weekly','biweekly','semimonthly','fourweekly','monthly'];
+  const frequencyBaseLabels={weekly:'Weekly',semimonthly:'Twice Monthly',fourweekly:'Every 4 Weeks',monthly:'Monthly'};
+  const fortnightlyRegions=new Set(['IN','GB','IE','AU','NZ']);
+  const biweeklyRegions=new Set(['US','CA']);
+
+  function frequencyLabel(key,regionCode=region()){
+    if(key==='biweekly'){
+      if(fortnightlyRegions.has(regionCode)) return 'Fortnightly (Every 2 Weeks)';
+      if(biweeklyRegions.has(regionCode)) return 'Biweekly (Every 2 Weeks)';
+      return 'Every 2 Weeks';
+    }
+    return frequencyBaseLabels[key]||'Monthly';
+  }
+  function frequencyAdjective(key=frequency()){
+    if(key==='biweekly') return fortnightlyRegions.has(region())?'fortnightly':biweeklyRegions.has(region())?'biweekly':'every-2-weeks';
+    if(key==='semimonthly') return 'twice-monthly';
+    if(key==='fourweekly') return 'four-weekly';
+    return key==='weekly'?'weekly':'monthly';
+  }
+  function cadenceText(key=frequency()){
+    if(key==='weekly') return 'per week';
+    if(key==='biweekly') return 'every 2 weeks';
+    if(key==='semimonthly') return 'twice monthly';
+    if(key==='fourweekly') return 'every 4 weeks';
+    return 'per month';
+  }
+  function frequency(){return $('contributionFrequency')?.value||'monthly';}
+  function defaultFrequencyForRegion(code=region()){return frequencyDefaults[code]||'monthly';}
+  function frequencyDisplayName(key=frequency()){return frequencyLabel(key,region()).replace(/\s*\(Every 2 Weeks\)\s*/,'').trim();}
+  function contributionText(amount,key=frequency()){return `${money(amount)} ${cadenceText(key)}`;}
+  function isIndia(){return region()==='IN';}
+  function contributionNoun(){return isIndia()?'SIP':'investment';}
+  function currentContributionLabel(){
+    const key=frequency(),adj=frequencyAdjective(key);
+    return `Current ${adj} ${contributionNoun()}`;
+  }
+
   function value(id){return Number($(id).value)||0;}
-  function raw(){return {mode,currentSavings:value('currentSavings'),monthlySIP:value('monthlySIP'),years:value('years'),annualReturn:value('annualReturn'),annualStepUp:value('annualStepUp'),goalToday:value('goalToday'),goalBasis:$('goalBasis').value,goalFuture:value('goalFuture'),targetAmount:value('targetAmount'),inflation:value('inflation')};}
+  function raw(){return {mode,currentSavings:value('currentSavings'),monthlySIP:value('monthlySIP'),contributionFrequency:frequency(),years:value('years'),annualReturn:value('annualReturn'),annualStepUp:value('annualStepUp'),goalToday:value('goalToday'),goalBasis:$('goalBasis').value,goalFuture:value('goalFuture'),targetAmount:value('targetAmount'),inflation:value('inflation')};}
   function money(v){return Locale.formatMoney(v,{maximumFractionDigits:0});}
   function compact(v){return Locale.formatCompactMoney(v,{maximumFractionDigits:2});}
   function pct(v){return `${Math.round(v*100)}%`;}
@@ -19,6 +58,81 @@
   function regionName(){return Locale.regions[Locale.getRegion()]?.label||'Other';}
 
   function setMoneyPrefixes(){ $$('.currency-prefix').forEach(x=>x.textContent=symbol()); }
+
+  function syncFrequencyOptions(){
+    const select=$('contributionFrequency');
+    if(!select) return;
+    const desired=frequencyUserOverride?(select.value||'monthly'):defaultFrequencyForRegion();
+    select.innerHTML=frequencyOrder.map(key=>`<option value="${key}">${frequencyLabel(key)}</option>`).join('');
+    select.value=frequencyOrder.includes(desired)?desired:'monthly';
+  }
+
+  function updateFrequencyCopy(){
+    const key=frequency(),adj=frequencyAdjective(key),monthly=key==='monthly',noun=contributionNoun();
+    const display=frequencyDisplayName(key);
+    if($('introEyebrow')) $('introEyebrow').textContent=isIndia()
+      ? (monthly?'SIP & MONTHLY INVESTING':'SIP & RECURRING INVESTING')
+      : 'RECURRING INVESTING & GROWTH';
+    if($('sipAmountLabel')) $('sipAmountLabel').textContent=currentContributionLabel();
+    if($('sipAmountHint')) $('sipAmountHint').textContent=monthly?'The starting monthly contribution.':`The starting contribution invested ${cadenceText(key)}.`;
+    if($('stepUpLabel')) $('stepUpLabel').textContent=monthly
+      ? (isIndia()?'Annual increase in monthly SIP':'Annual increase in monthly investment')
+      : (isIndia()?'Annual increase in SIP contribution':'Annual contribution increase');
+    if($('investmentIntro')) $('investmentIntro').textContent=monthly
+      ? 'Enter your current investment amount and the recurring monthly contribution you want to model.'
+      : `Enter your current investment amount and the recurring contribution you want to invest ${cadenceText(key)}.`;
+
+    if($('introHeadline')) $('introHeadline').textContent=isIndia()
+      ? `See how a ${adj} SIP may grow or what SIP may be required for a goal.`
+      : `See how ${adj} investments may grow or what recurring investment may be required for a goal.`;
+    if($('ideaContribution')) $('ideaContribution').textContent=isIndia()?`${display} SIP`:`${display} investment`;
+    if($('ideaDescription')) $('ideaDescription').textContent=monthly
+      ? (isIndia()
+        ? 'A SIP is a recurring investment method. This calculator models the arithmetic of regular contributions and assumed returns; it does not predict or guarantee investment performance.'
+        : 'Monthly investing is a recurring investment method. This calculator models the arithmetic of regular contributions and assumed returns; it does not predict or guarantee investment performance.')
+      : 'Regular investing is a recurring contribution method. This calculator models the arithmetic of regular contributions and assumed returns; it does not predict or guarantee investment performance.';
+
+    const requiredLabel=monthly
+      ? `Total monthly ${noun} required from now`
+      : `Total ${display.toLowerCase()} ${noun} required from now`;
+    const additionalLabel=monthly
+      ? `Additional monthly ${noun} required`
+      : `Additional ${display.toLowerCase()} ${noun} required`;
+    if($('requiredSIPLabel')) $('requiredSIPLabel').textContent=requiredLabel;
+    if($('additionalSIPLabel')) $('additionalSIPLabel').textContent=additionalLabel;
+    if($('actionRibbonLabel')) $('actionRibbonLabel').textContent=additionalLabel;
+
+    if($('journeyIntro')) $('journeyIntro').textContent=monthly
+      ? `Follow the monthly ${noun}, money invested and modelled portfolio value for every year of the plan.`
+      : `Follow the recurring ${noun}, money invested and modelled portfolio value for every year of the plan.`;
+
+    if($('howProjection')) $('howProjection').textContent=monthly
+      ? (isIndia()
+        ? 'A recurring SIP is added monthly while the invested balance compounds using the monthly rate implied by the annual return assumption. If a step-up is entered, the monthly contribution increases once each year.'
+        : 'A recurring investment is added monthly while the invested balance compounds using the monthly rate implied by the annual return assumption. If an annual increase is entered, the monthly contribution increases once each year.')
+      : `A recurring ${noun} contribution is added ${cadenceText(key)} while the invested balance compounds using the equivalent ${display.toLowerCase()} rate implied by the annual return assumption. If an annual increase is entered, the contribution increases once each year.`;
+    if($('howGoal')) $('howGoal').textContent=monthly
+      ? (isIndia()
+        ? 'In goal mode, Carrowmont can either grow an amount entered in today’s money using the inflation / price-growth assumption or use a future target amount directly, then solve for the starting monthly SIP required.'
+        : 'In goal mode, Carrowmont can either grow an amount entered in today’s money using the inflation / price-growth assumption or use a future target amount directly, then solve for the starting monthly investment required.')
+      : `In goal mode, Carrowmont can either grow an amount entered in today’s money using the inflation / price-growth assumption or use a future target amount directly, then solve for the starting ${display.toLowerCase()} ${noun} required.`;
+    if($('howTarget')) $('howTarget').textContent=monthly
+      ? `In Time to target mode, you enter the target corpus and your ${noun} assumptions; the calculator estimates the first modelled month in which the portfolio reaches that target.`
+      : `In Time to target mode, you enter the target corpus and your ${noun} assumptions; the calculator estimates the first modelled contribution period in which the portfolio reaches that target.`;
+
+    if($('methodRate')) $('methodRate').innerHTML=monthly
+      ? '<strong>Monthly return:</strong> The annual return assumption is converted to the equivalent monthly compound rate.'
+      : `<strong>${display} return:</strong> The annual return assumption is converted to the equivalent compound rate for the selected contribution frequency.`;
+    if($('methodProjection')) $('methodProjection').innerHTML=monthly
+      ? `<strong>${isIndia()?'SIP':'Investment'} projection:</strong> Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.`
+      : `<strong>${isIndia()?'SIP':'Investment'} projection:</strong> Existing investments grow at the equivalent periodic rate. Contributions are added at the end of each selected contribution period and can increase once each year by the entered annual increase.`;
+    if($('methodRequired')) $('methodRequired').innerHTML=monthly
+      ? `<strong>Monthly ${isIndia()?'SIP':'investment'} required:</strong> The starting monthly contribution that would model to the selected future goal while applying the entered annual step-up. It is solved numerically.`
+      : `<strong>${display} ${noun} required:</strong> The starting contribution for the selected frequency that would model to the selected future goal while applying the entered annual increase. It is solved numerically.`;
+    if($('methodTarget')) $('methodTarget').innerHTML=monthly
+      ? '<strong>Time to target:</strong> The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.'
+      : '<strong>Time to target:</strong> The first modelled contribution period in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.';
+  }
 
   function setupLocale(){
     const rs=$('regionSelect'),cs=$('currencySelect');
@@ -39,6 +153,8 @@
       if($('targetAmountHint')) $('targetAmountHint').textContent=indianContext
         ? 'For example, ₹1 crore as a future nominal target.'
         : `Enter the future nominal target directly in ${code}.`;
+      syncFrequencyOptions();
+      updateFrequencyCopy();
     };
     rs.addEventListener('change',()=>{Locale.setRegion(rs.value);cs.value=Locale.getCurrency();}); cs.addEventListener('change',()=>Locale.setCurrency(cs.value));
     $('localeDone').addEventListener('click',()=>{$('localeMenu').open=false;}); window.addEventListener('carrowmont:localechange',()=>{sync();render();}); sync();
@@ -62,7 +178,12 @@
   }
 
   function reset(){
-    const d=defaults[mode]; Object.keys(d).forEach(k=>{if($(k)) $(k).value=d[k];}); syncGoalBasis(); render();
+    const d=defaults[mode]; Object.keys(d).forEach(k=>{if($(k)) $(k).value=d[k];});
+    frequencyUserOverride=false;
+    syncFrequencyOptions();
+    syncGoalBasis();
+    updateFrequencyCopy();
+    render();
   }
 
   function formatDuration(months,reached=true){
@@ -73,21 +194,28 @@
   }
 
   function updateSnapshot(r){
+    const key=r.state.contributionFrequency,display=frequencyDisplayName(key),amountText=v=>contributionText(v,key),noun=contributionNoun();
     if(mode==='growth'){
       const years=r.state.years; $('periodPill').textContent=`${years}-year plan`;
-      $('snapshotTitle').textContent='SIP growth snapshot'; $('heroLabel').textContent=`Estimated value after ${years} years`; $('heroValue').textContent=compact(r.projection.portfolio); $('heroNote').textContent='Based on your existing investment, monthly SIP, step-up and return assumption';
+      $('snapshotTitle').textContent=isIndia()?'SIP growth snapshot':'Investment growth snapshot';
+      $('heroLabel').textContent=`Estimated value after ${years} years`;
+      $('heroValue').textContent=compact(r.projection.portfolio);
+      $('heroNote').textContent=key==='monthly'
+        ? `Based on your existing investment, monthly ${noun}, step-up and return assumption`
+        : `Based on your existing investment, ${display.toLowerCase()} ${noun}, annual increase and return assumption`;
       $('totalInvested').textContent=compact(r.projection.totalInvested); $('estimatedGrowth').textContent=compact(r.projection.growth); $('fixedValue').textContent=compact(r.fixedProjection.portfolio); $('stepUpBenefit').textContent=compact(r.stepUpBenefit);
     } else if(mode==='goal') {
       const years=r.state.years; $('periodPill').textContent=`${years}-year goal`;
-      $('snapshotTitle').textContent='Goal SIP snapshot'; $('heroLabel').textContent=`Estimated goal amount in ${years} years`; $('heroValue').textContent=compact(r.target);
+      $('snapshotTitle').textContent=isIndia()?'Goal SIP snapshot':'Goal investment snapshot'; $('heroLabel').textContent=`Estimated goal amount in ${years} years`; $('heroValue').textContent=compact(r.target);
       $('heroNote').textContent=r.state.goalBasis==='future'?`Entered directly as the future target amount for year ${years}`:`${money(r.state.goalToday)} today grown at ${(r.state.inflation*100).toFixed(1)}% p.a. for ${years} years`;
-      $('futureGoal').textContent=compact(r.target); $('currentPlanValue').textContent=compact(r.current.portfolio); $('requiredSIP').textContent=`${money(r.requiredMonthly)}/mo`; $('additionalSIP').textContent=`${money(r.additionalMonthly)}/mo`;
+      $('futureGoal').textContent=compact(r.target); $('currentPlanValue').textContent=compact(r.current.portfolio); $('requiredSIP').textContent=amountText(r.requiredContribution); $('additionalSIP').textContent=amountText(r.additionalContribution);
       const fp=Math.min(100,Math.max(0,r.funding*100)); $('fundingPct').textContent=pct(r.funding); $('fundingBar').style.width=`${fp}%`;
-      $('fundingText').textContent=r.target<=0?'Enter a goal amount to calculate funding.':r.funding>=1?`Your current plan is projected to meet or exceed the modelled goal under these assumptions.`:`Your current plan is projected to cover about ${Math.round(r.funding*100)}% of the modelled goal. This percentage uses the current SIP before any increase.`;
-      $('actionValue').textContent=`${money(r.additionalMonthly)}/mo`; const ar=$('actionRibbon'); if(r.additionalMonthly<=0){ar.style.background='#e9f7f4';ar.style.borderColor='#a7d8d1';ar.style.color='#08756d';ar.querySelector('span').textContent='Additional monthly SIP required';}else{ar.style.background='#fff5d9';ar.style.borderColor='#efc96d';ar.style.color='#7a5200';ar.querySelector('span').textContent='Additional monthly SIP required';}
+      $('fundingText').textContent=r.target<=0?'Enter a goal amount to calculate funding.':r.funding>=1?`Your current plan is projected to meet or exceed the modelled goal under these assumptions.`:`Your current plan is projected to cover about ${Math.round(r.funding*100)}% of the modelled goal. This percentage uses the current ${noun} before any increase.`;
+      $('actionValue').textContent=amountText(r.additionalContribution); const ar=$('actionRibbon'); if(r.additionalContribution<=0){ar.style.background='#e9f7f4';ar.style.borderColor='#a7d8d1';ar.style.color='#08756d';}else{ar.style.background='#fff5d9';ar.style.borderColor='#efc96d';ar.style.color='#7a5200';}
+      updateFrequencyCopy();
     } else {
       $('periodPill').textContent=r.reached?formatDuration(r.months,true):'50+ year horizon';
-      $('snapshotTitle').textContent='Time-to-target snapshot'; $('heroLabel').textContent='Estimated time to reach your target'; $('heroValue').textContent=formatDuration(r.months,r.reached); $('heroNote').textContent=`Target ${compact(r.target)} with ${money(r.state.monthlySIP)}/month, ${(r.state.annualReturn*100).toFixed(1)}% assumed return and ${(r.state.annualStepUp*100).toFixed(1)}% annual step-up`;
+      $('snapshotTitle').textContent='Time-to-target snapshot'; $('heroLabel').textContent='Estimated time to reach your target'; $('heroValue').textContent=formatDuration(r.months,r.reached); $('heroNote').textContent=`Target ${compact(r.target)} with ${amountText(r.state.monthlySIP)}, ${(r.state.annualReturn*100).toFixed(1)}% assumed return and ${(r.state.annualStepUp*100).toFixed(1)}% annual increase`;
       $('targetCorpusValue').textContent=compact(r.target); $('timeToTargetValue').textContent=formatDuration(r.months,r.reached); $('targetTotalInvested').textContent=compact(r.totalInvested); $('targetGrowthValue').textContent=compact(r.growth);
     }
   }
@@ -166,9 +294,10 @@
 
   function summaryCard(label,value,small=''){return `<div><span>${label}</span><strong>${value}</strong>${small?`<small>${small}</small>`:''}</div>`;}
   function renderSummary(r){
-    if(mode==='growth') $('summaryRow').innerHTML=summaryCard('Monthly SIP',`${money(r.state.monthlySIP)}/mo`)+summaryCard('Total invested',compact(r.projection.totalInvested))+summaryCard('Estimated growth',compact(r.projection.growth))+summaryCard(`Value after ${r.state.years} years`,compact(r.projection.portfolio));
-    else if(mode==='goal') $('summaryRow').innerHTML=summaryCard(r.state.goalBasis==='future'?'Future target entered':'Goal today',compact(r.state.goalBasis==='future'?r.state.goalFuture:r.state.goalToday))+summaryCard('Future goal',compact(r.target))+summaryCard('Current plan at goal date',compact(r.current.portfolio))+summaryCard('Projected funding',pct(r.funding),'Uses current SIP before any increase');
-    else $('summaryRow').innerHTML=summaryCard('Target corpus',compact(r.target))+summaryCard('Current monthly SIP',`${money(r.state.monthlySIP)}/mo`)+summaryCard('Estimated time',formatDuration(r.months,r.reached))+summaryCard('Estimated value when reached',compact(r.portfolio));
+    const key=r.state.contributionFrequency,display=frequencyDisplayName(key),noun=contributionNoun(),amount=contributionText(r.state.monthlySIP,key);
+    if(mode==='growth') $('summaryRow').innerHTML=summaryCard(`${display} ${noun}`,amount)+summaryCard('Total invested',compact(r.projection.totalInvested))+summaryCard('Estimated growth',compact(r.projection.growth))+summaryCard(`Value after ${r.state.years} years`,compact(r.projection.portfolio));
+    else if(mode==='goal') $('summaryRow').innerHTML=summaryCard(r.state.goalBasis==='future'?'Future target entered':'Goal today',compact(r.state.goalBasis==='future'?r.state.goalFuture:r.state.goalToday))+summaryCard('Future goal',compact(r.target))+summaryCard('Current plan at goal date',compact(r.current.portfolio))+summaryCard('Projected funding',pct(r.funding),`Uses current ${noun} before any increase`);
+    else $('summaryRow').innerHTML=summaryCard('Target corpus',compact(r.target))+summaryCard(`Current ${display.toLowerCase()} ${noun}`,amount)+summaryCard('Estimated time',formatDuration(r.months,r.reached))+summaryCard('Estimated value when reached',compact(r.portfolio));
   }
 
   function renderJourney(r){
@@ -177,29 +306,32 @@
     const last=rows[rows.length-1];
     const summary=$('journeySummary');
     const growthShare=last&&last.projectedValue>0?Math.max(0,last.estimatedGrowth/last.projectedValue):0;
+    const key=r.state.contributionFrequency,display=frequencyDisplayName(key),noun=contributionNoun();
+    const contributionHeader=`${display} ${noun} in that year`;
+    const contributionCell=x=>contributionText(x.contributionPerPeriod??x.monthlySIP,key);
     if(mode==='growth'){
       summary.innerHTML=
-        summaryCard('Total money invested',compact(r.projection.totalInvested),'Existing amount plus all SIP contributions')+
+        summaryCard('Total money invested',compact(r.projection.totalInvested),`Existing amount plus all ${noun} contributions`)+
         summaryCard('Estimated investment growth',compact(r.projection.growth),'Modelled value above total money invested')+
         summaryCard(`Projected value after ${r.state.years} years`,compact(r.projection.portfolio),`Based on ${(r.state.annualReturn*100).toFixed(1)}% p.a. assumed return`)+
         summaryCard('Growth share of final value',`${Math.round(growthShare*100)}%`,'Estimated investment growth ÷ projected value');
-      $('journeyHead').innerHTML='<tr><th>Year</th><th>Monthly SIP in that year</th><th>Invested during year</th><th>Total invested to date</th><th>Projected value at year-end</th><th>Estimated investment growth</th></tr>';
-      $('journeyBody').innerHTML=rows.map(x=>`<tr><td>Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}</td><td>${money(x.monthlySIP)}/mo</td><td>${compact(x.investedThisYear)}</td><td>${compact(x.totalInvested)}</td><td class="positive">${compact(x.projectedValue)}</td><td class="positive">${compact(x.estimatedGrowth)}</td></tr>`).join('');
+      $('journeyHead').innerHTML=`<tr><th>Year</th><th>${contributionHeader}</th><th>Invested during year</th><th>Total invested to date</th><th>Projected value at year-end</th><th>Estimated investment growth</th></tr>`;
+      $('journeyBody').innerHTML=rows.map(x=>`<tr><td>Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}</td><td>${contributionCell(x)}</td><td>${compact(x.investedThisYear)}</td><td>${compact(x.totalInvested)}</td><td class="positive">${compact(x.projectedValue)}</td><td class="positive">${compact(x.estimatedGrowth)}</td></tr>`).join('');
       $('journeyNote').textContent=`Projected values use the entered ${(r.state.annualReturn*100).toFixed(1)}% annual return assumption. Estimated investment growth is the modelled projected value above the total money invested to that point. Total invested to date includes any existing investment. These are not actual or guaranteed returns.`;
     }else if(mode==='goal'){
       summary.innerHTML=
-        summaryCard('Total money invested by goal date',compact(r.current.totalInvested),'Existing amount plus current SIP path')+
+        summaryCard('Total money invested by goal date',compact(r.current.totalInvested),`Existing amount plus current ${noun} path`)+
         summaryCard('Projected current-plan value',compact(r.current.portfolio),`Future value using ${(r.state.annualReturn*100).toFixed(1)}% p.a. assumed return`)+
         summaryCard('Estimated future goal amount',compact(r.target),'Future money at the selected goal date')+
-        summaryCard('Projected funding from current plan',pct(r.funding),'Before increasing the current SIP');
-      $('journeyHead').innerHTML='<tr><th>Year</th><th>Monthly SIP in that year</th><th>Invested during year</th><th>Total invested to date</th><th>Projected current-plan value</th><th class="goal-col">Goal amount at that year</th><th>Projected funding</th></tr>';
-      $('journeyBody').innerHTML=rows.map(x=>`<tr><td>Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}</td><td>${money(x.monthlySIP)}/mo</td><td>${compact(x.investedThisYear)}</td><td>${compact(x.totalInvested)}</td><td class="positive">${compact(x.projectedValue)}</td><td class="goal-col">${compact(x.goal||0)}</td><td>${pct(x.funding||0)}</td></tr>`).join('');
-      $('journeyNote').textContent=`Projected values use the entered ${(r.state.annualReturn*100).toFixed(1)}% annual return assumption. Projected funding compares the current savings/SIP path with the modelled goal amount at each year. Total invested to date includes any existing investment. It does not assume the higher SIP required to close the gap.`;
+        summaryCard('Projected funding from current plan',pct(r.funding),`Before increasing the current ${noun}`);
+      $('journeyHead').innerHTML=`<tr><th>Year</th><th>${contributionHeader}</th><th>Invested during year</th><th>Total invested to date</th><th>Projected current-plan value</th><th class="goal-col">Goal amount at that year</th><th>Projected funding</th></tr>`;
+      $('journeyBody').innerHTML=rows.map(x=>`<tr><td>Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}</td><td>${contributionCell(x)}</td><td>${compact(x.investedThisYear)}</td><td>${compact(x.totalInvested)}</td><td class="positive">${compact(x.projectedValue)}</td><td class="goal-col">${compact(x.goal||0)}</td><td>${pct(x.funding||0)}</td></tr>`).join('');
+      $('journeyNote').textContent=`Projected values use the entered ${(r.state.annualReturn*100).toFixed(1)}% annual return assumption. Projected funding compares the current savings/${noun} path with the modelled goal amount at each year. Total invested to date includes any existing investment. It does not assume the higher contribution required to close the gap.`;
     }else{
       summary.innerHTML=summaryCard('Target corpus',compact(r.target))+summaryCard('Estimated time to target',formatDuration(r.months,r.reached))+summaryCard('Total money invested by then',compact(r.totalInvested))+summaryCard('Estimated investment growth',compact(r.growth));
-      $('journeyHead').innerHTML='<tr><th>Year</th><th>Monthly SIP in that year</th><th>Invested during year</th><th>Total invested to date</th><th>Projected portfolio value</th><th class="goal-col">Target corpus</th><th>Progress to target</th></tr>';
-      $('journeyBody').innerHTML=rows.map(x=>`<tr><td>Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}</td><td>${money(x.monthlySIP)}/mo</td><td>${compact(x.investedThisYear)}</td><td>${compact(x.totalInvested)}</td><td class="positive">${compact(x.projectedValue)}</td><td class="goal-col">${compact(r.target)}</td><td>${pct(Math.min(1,x.projectedValue/Math.max(1,r.target)))}</td></tr>`).join('');
-      $('journeyNote').textContent=`The target is a future nominal corpus. Projected values use the entered ${(r.state.annualReturn*100).toFixed(1)}% annual return assumption and the selected SIP step-up. The table shows how close the modelled portfolio is to the target at each year.`;
+      $('journeyHead').innerHTML=`<tr><th>Year</th><th>${contributionHeader}</th><th>Invested during year</th><th>Total invested to date</th><th>Projected portfolio value</th><th class="goal-col">Target corpus</th><th>Progress to target</th></tr>`;
+      $('journeyBody').innerHTML=rows.map(x=>`<tr><td>Year ${Number.isInteger(x.year)?x.year:x.year.toFixed(1)}</td><td>${contributionCell(x)}</td><td>${compact(x.investedThisYear)}</td><td>${compact(x.totalInvested)}</td><td class="positive">${compact(x.projectedValue)}</td><td class="goal-col">${compact(r.target)}</td><td>${pct(Math.min(1,x.projectedValue/Math.max(1,r.target)))}</td></tr>`).join('');
+      $('journeyNote').textContent=`The target is a future nominal corpus. Projected values use the entered ${(r.state.annualReturn*100).toFixed(1)}% annual return assumption and the selected annual contribution increase. The table shows how close the modelled portfolio is to the target at each year.`;
     }
     $('journeyCount').textContent=`${rows.length} yearly rows`;
     $('comparisonCount').textContent=`${rows.length} yearly rows`;
@@ -207,38 +339,71 @@
   }
 
   function renderInsights(r){
+    const key=r.state.contributionFrequency,display=frequencyDisplayName(key),noun=contributionNoun();
     if(mode==='growth'){
       const contributionShare=r.projection.portfolio>0?r.projection.totalInvested/r.projection.portfolio:0; const growthShare=1-contributionShare;
-      $('insightGrid').innerHTML=`<article><span>Investment multiple</span><strong>${r.projection.totalInvested>0?(r.projection.portfolio/r.projection.totalInvested).toFixed(2):'0.00'}×</strong><p>Projected ending value divided by the money modelled as invested.</p></article><article><span>Estimated growth share</span><strong>${Math.round(Math.max(0,growthShare)*100)}%</strong><p>Share of the projected ending value above the modelled amount invested.</p></article><article><span>Annual SIP step-up</span><strong>${(r.state.annualStepUp*100).toFixed(1)}%</strong><p>Your monthly SIP is modelled to increase once each year at this rate.</p></article><article><span>Step-up impact</span><strong>${compact(r.stepUpBenefit)}</strong><p>Difference between the selected step-up path and a fixed SIP under the same return and period.</p></article>`;
+      $('insightGrid').innerHTML=`<article><span>Investment multiple</span><strong>${r.projection.totalInvested>0?(r.projection.portfolio/r.projection.totalInvested).toFixed(2):'0.00'}×</strong><p>Projected ending value divided by the money modelled as invested.</p></article><article><span>Estimated growth share</span><strong>${Math.round(Math.max(0,growthShare)*100)}%</strong><p>Share of the projected ending value above the modelled amount invested.</p></article><article><span>Annual ${isIndia()?'SIP step-up':'contribution increase'}</span><strong>${(r.state.annualStepUp*100).toFixed(1)}%</strong><p>Your ${display.toLowerCase()} ${noun} is modelled to increase once each year at this rate.</p></article><article><span>Step-up impact</span><strong>${compact(r.stepUpBenefit)}</strong><p>Difference between the selected annual-increase path and a fixed contribution under the same return and period.</p></article>`;
     }else if(mode==='goal'){
-      $('insightGrid').innerHTML=`<article><span>Goal inflation effect</span><strong>${r.state.goalBasis==='future'?'Direct':(r.state.goalToday>0?(r.target/r.state.goalToday).toFixed(2)+'×':'0.00×')}</strong><p>${r.state.goalBasis==='future'?'The future target was entered directly.':'The future nominal goal amount relative to the amount entered today.'}</p></article><article><span>Current-plan funding</span><strong>${pct(r.funding)}</strong><p>Based on existing savings plus the current monthly SIP before any increase.</p></article><article><span>Funding gap</span><strong>${compact(r.gap)}</strong><p>Difference between the modelled goal and current-plan value at the selected date.</p></article><article><span>Additional SIP required</span><strong>${money(r.additionalMonthly)}/mo</strong><p>Extra starting monthly contribution indicated under the selected return, step-up and goal assumptions.</p></article>`;
+      $('insightGrid').innerHTML=`<article><span>Goal inflation effect</span><strong>${r.state.goalBasis==='future'?'Direct':(r.state.goalToday>0?(r.target/r.state.goalToday).toFixed(2)+'×':'0.00×')}</strong><p>${r.state.goalBasis==='future'?'The future target was entered directly.':'The future nominal goal amount relative to the amount entered today.'}</p></article><article><span>Current-plan funding</span><strong>${pct(r.funding)}</strong><p>Based on existing savings plus the current ${display.toLowerCase()} ${noun} before any increase.</p></article><article><span>Funding gap</span><strong>${compact(r.gap)}</strong><p>Difference between the modelled goal and current-plan value at the selected date.</p></article><article><span>Additional ${noun} required</span><strong>${contributionText(r.additionalContribution,key)}</strong><p>Extra starting ${display.toLowerCase()} contribution indicated under the selected return, annual increase and goal assumptions.</p></article>`;
     }else{
-      $('insightGrid').innerHTML=`<article><span>Target corpus</span><strong>${compact(r.target)}</strong><p>The future nominal amount you want the portfolio to reach.</p></article><article><span>Estimated time</span><strong>${formatDuration(r.months,r.reached)}</strong><p>Modelled time under the entered SIP, step-up and constant return assumption.</p></article><article><span>Total invested by then</span><strong>${compact(r.totalInvested)}</strong><p>Existing investment plus modelled SIP contributions through the target date.</p></article><article><span>Time saved by step-up</span><strong>${r.fixedReached?formatDuration(r.timeSavedMonths,true):'Not reached with fixed SIP'}</strong><p>Difference versus keeping the starting monthly SIP fixed.</p></article>`;
+      $('insightGrid').innerHTML=`<article><span>Target corpus</span><strong>${compact(r.target)}</strong><p>The future nominal amount you want the portfolio to reach.</p></article><article><span>Estimated time</span><strong>${formatDuration(r.months,r.reached)}</strong><p>Modelled time under the entered ${noun}, annual increase and constant return assumption.</p></article><article><span>Total invested by then</span><strong>${compact(r.totalInvested)}</strong><p>Existing investment plus modelled contributions through the target date.</p></article><article><span>Time saved by step-up</span><strong>${r.fixedReached?formatDuration(r.timeSavedMonths,true):'Not reached with fixed contribution'}</strong><p>Difference versus keeping the starting ${display.toLowerCase()} contribution fixed.</p></article>`;
     }
   }
 
   function scenarioAges(years){ const a=Math.max(1,years-5),c=years,b=Math.min(50,years+5); return [...new Set([a,c,b])]; }
   function renderScenarios(r){
+    const key=r.state.contributionFrequency,display=frequencyDisplayName(key),noun=contributionNoun();
     if(mode==='target'){
-      $('scenarioTitle').textContent='Compare monthly SIP amounts'; $('scenarioNote').textContent='Same target, return and step-up assumptions; only the starting monthly SIP changes.';
+      $('scenarioTitle').textContent=`Compare ${display.toLowerCase()} ${noun} amounts`; $('scenarioNote').textContent=`Same target, return and annual-increase assumptions; only the starting ${display.toLowerCase()} contribution changes.`;
       const bases=[Math.max(0,r.state.monthlySIP*.8),r.state.monthlySIP,r.state.monthlySIP*1.2];
-      $('scenarioGrid').innerHTML=bases.map((b,i)=>{const t=Core.timeToTarget(r.state,b,r.state.annualStepUp*100);const current=i===1;return `<article class="scenario ${current?'current':''}"><div class="tag">${current?'Current SIP':'Alternative SIP'}</div><strong class="big">${money(b)}/mo</strong><p class="sub">Estimated time to ${compact(r.target)}.</p><dl><div><dt>Time to target</dt><dd>${formatDuration(t.months,t.reached)}</dd></div><div><dt>Total invested</dt><dd>${compact(t.totalInvested)}</dd></div><div><dt>Estimated growth</dt><dd>${compact(t.growth)}</dd></div></dl></article>`;}).join('');
+      $('scenarioGrid').innerHTML=bases.map((b,i)=>{const t=Core.timeToTarget(r.state,b,r.state.annualStepUp*100);const current=i===1;return `<article class="scenario ${current?'current':''}"><div class="tag">${current?`Current ${noun}`:`Alternative ${noun}`}</div><strong class="big">${contributionText(b,key)}</strong><p class="sub">Estimated time to ${compact(r.target)}.</p><dl><div><dt>Time to target</dt><dd>${formatDuration(t.months,t.reached)}</dd></div><div><dt>Total invested</dt><dd>${compact(t.totalInvested)}</dd></div><div><dt>Estimated growth</dt><dd>${compact(t.growth)}</dd></div></dl></article>`;}).join('');
       return;
     }
-    const yrs=scenarioAges(r.state.years); $('scenarioTitle').textContent=mode==='growth'?'Compare investment periods':'Compare goal dates'; $('scenarioNote').textContent=mode==='growth'?'Same SIP, return and step-up assumptions; only the time horizon changes.':'Same goal, return, inflation and SIP assumptions; only the goal date changes.';
-    $('scenarioGrid').innerHTML=yrs.map(y=>{const current=Math.abs(y-r.state.years)<.001; if(mode==='growth'){const p=Core.project(r.state,y);return `<article class="scenario ${current?'current':''}"><div class="tag">${current?'Selected period':'Alternative period'}</div><strong class="big">${y} years</strong><p class="sub">Future value under the same SIP assumptions.</p><dl><div><dt>Projected value</dt><dd>${compact(p.portfolio)}</dd></div><div><dt>Total invested</dt><dd>${compact(p.totalInvested)}</dd></div><div><dt>Estimated growth</dt><dd>${compact(p.growth)}</dd></div></dl></article>`;} const target=Core.goalAtYears(r.state,y),p=Core.project(r.state,y),req=Core.requiredMonthly(r.state,y),fund=target>0?p.portfolio/target:1; return `<article class="scenario ${current?'current':''}"><div class="tag">${current?'Selected goal date':'Alternative goal date'}</div><strong class="big">${y} years</strong><p class="sub">Future-money values at that goal date.</p><dl><div><dt>Goal amount</dt><dd>${compact(target)}</dd></div><div><dt>Current plan</dt><dd>${compact(p.portfolio)}</dd></div><div><dt>Monthly SIP required</dt><dd>${money(req)}</dd></div><div><dt>Projected funding</dt><dd>${pct(fund)}</dd></div></dl></article>`;}).join('');
+    const yrs=scenarioAges(r.state.years); $('scenarioTitle').textContent=mode==='growth'?'Compare investment periods':'Compare goal dates'; $('scenarioNote').textContent=mode==='growth'?`Same ${noun}, return and annual-increase assumptions; only the time horizon changes.`:`Same goal, return, inflation and ${noun} assumptions; only the goal date changes.`;
+    $('scenarioGrid').innerHTML=yrs.map(y=>{const current=Math.abs(y-r.state.years)<.001; if(mode==='growth'){const p=Core.project(r.state,y);return `<article class="scenario ${current?'current':''}"><div class="tag">${current?'Selected period':'Alternative period'}</div><strong class="big">${y} years</strong><p class="sub">Future value under the same ${noun} assumptions.</p><dl><div><dt>Projected value</dt><dd>${compact(p.portfolio)}</dd></div><div><dt>Total invested</dt><dd>${compact(p.totalInvested)}</dd></div><div><dt>Estimated growth</dt><dd>${compact(p.growth)}</dd></div></dl></article>`;} const target=Core.goalAtYears(r.state,y),p=Core.project(r.state,y),req=Core.requiredContribution(r.state,y),fund=target>0?p.portfolio/target:1; return `<article class="scenario ${current?'current':''}"><div class="tag">${current?'Selected goal date':'Alternative goal date'}</div><strong class="big">${y} years</strong><p class="sub">Future-money values at that goal date.</p><dl><div><dt>Goal amount</dt><dd>${compact(target)}</dd></div><div><dt>Current plan</dt><dd>${compact(p.portfolio)}</dd></div><div><dt>${display} ${noun} required</dt><dd>${contributionText(req,key)}</dd></div><div><dt>Projected funding</dt><dd>${pct(fund)}</dd></div></dl></article>`;}).join('');
   }
 
   function render(){
+    updateFrequencyCopy();
     const r=Core.result(raw()); latestResult=r; updateSnapshot(r); renderSummary(r); renderCharts(r); renderJourney(r); renderInsights(r); renderScenarios(r);
-    $('visualTitle').textContent=mode==='growth'?'See how the SIP may build over time':mode==='goal'?'See the goal and SIP path together':'See how the current SIP may approach your target';
+    const noun=contributionNoun();
+    $('visualTitle').textContent=mode==='growth'?`See how the ${noun} may build over time`:mode==='goal'?`See the goal and ${noun} path together`:`See how the current ${noun} may approach your target`;
   }
 
   function copySummary(){
-    const r=Core.result(raw()); let text='Carrowmont SIP Calculator Summary\n\n';
-    if(mode==='growth') text+=`Monthly SIP: ${money(r.state.monthlySIP)}\nInvestment period: ${r.state.years} years\nExpected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.\nAnnual SIP step-up: ${(r.state.annualStepUp*100).toFixed(1)}%\n\nEstimated future value: ${money(r.projection.portfolio)}\nTotal amount invested: ${money(r.projection.totalInvested)}\nEstimated investment growth: ${money(r.projection.growth)}\n`;
-    else if(mode==='goal') text+=`${r.state.goalBasis==='future'?`Future target amount: ${money(r.target)}`:`Goal amount today: ${money(r.state.goalToday)}\nInflation / price growth: ${(r.state.inflation*100).toFixed(1)}% p.a.`}\nGoal date: ${r.state.years} years\nExpected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.\n\nFuture goal amount: ${money(r.target)}\nProjected current plan: ${money(r.current.portfolio)}\nProjected funding: ${pct(r.funding)}\nTotal monthly SIP required: ${money(r.requiredMonthly)}\nAdditional monthly SIP required: ${money(r.additionalMonthly)}\n`;
-    else text+=`Target corpus: ${money(r.target)}\nCurrent monthly SIP: ${money(r.state.monthlySIP)}\nExpected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.\nAnnual SIP step-up: ${(r.state.annualStepUp*100).toFixed(1)}%\n\nEstimated time to target: ${formatDuration(r.months,r.reached)}\nTotal money invested by then: ${money(r.totalInvested)}\nEstimated investment growth: ${money(r.growth)}\n`;
+    const r=Core.result(raw()),key=r.state.contributionFrequency,display=frequencyDisplayName(key),noun=contributionNoun(); let text=`Carrowmont ${isIndia()?'SIP':'Recurring Investment'} Calculator Summary
+
+`;
+    const contributionLine=`${display} ${noun}: ${contributionText(r.state.monthlySIP,key)}
+Contribution frequency: ${frequencyLabel(key)}
+`;
+    if(mode==='growth') text+=`${contributionLine}Investment period: ${r.state.years} years
+Expected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.
+Annual ${isIndia()?'SIP step-up':'contribution increase'}: ${(r.state.annualStepUp*100).toFixed(1)}%
+
+Estimated future value: ${money(r.projection.portfolio)}
+Total amount invested: ${money(r.projection.totalInvested)}
+Estimated investment growth: ${money(r.projection.growth)}
+`;
+    else if(mode==='goal') text+=`${r.state.goalBasis==='future'?`Future target amount: ${money(r.target)}`:`Goal amount today: ${money(r.state.goalToday)}
+Inflation / price growth: ${(r.state.inflation*100).toFixed(1)}% p.a.`}
+Goal date: ${r.state.years} years
+Expected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.
+${contributionLine}
+Future goal amount: ${money(r.target)}
+Projected current plan: ${money(r.current.portfolio)}
+Projected funding: ${pct(r.funding)}
+Total ${display.toLowerCase()} ${noun} required: ${contributionText(r.requiredContribution,key)}
+Additional ${display.toLowerCase()} ${noun} required: ${contributionText(r.additionalContribution,key)}
+`;
+    else text+=`Target corpus: ${money(r.target)}
+${contributionLine}Expected return: ${(r.state.annualReturn*100).toFixed(1)}% p.a.
+Annual ${isIndia()?'SIP step-up':'contribution increase'}: ${(r.state.annualStepUp*100).toFixed(1)}%
+
+Estimated time to target: ${formatDuration(r.months,r.reached)}
+Total money invested by then: ${money(r.totalInvested)}
+Estimated investment growth: ${money(r.growth)}
+`;
     text+='\nEducational illustration only. Returns are not guaranteed.';
     if(window.CarrowmontInvestmentTerminology) text=window.CarrowmontInvestmentTerminology.text(text);
     navigator.clipboard?.writeText(text).then(()=>{const b=$('copyBtn'),old=b.textContent;b.textContent='✓ Summary Copied';setTimeout(()=>b.textContent=old,1800);});
@@ -256,7 +421,7 @@
     try{
       const canvases=await window.CarrowmontSIPPdfRenderer.render(latestResult,mode);
       const now=new Date(),pad=n=>String(n).padStart(2,'0');
-      const reportStem=window.CarrowmontInvestmentTerminology?.isIndia()?'sip-report':'monthly-investment-report';
+      const reportStem=window.CarrowmontInvestmentTerminology?.isIndia()?'sip-report':'recurring-investment-report';
       const filename=`${reportStem}-${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
       await window.CarrowmontPdfExport.downloadCanvases(canvases,{filename,quality:.97});
       if(status)status.textContent='Report has been downloaded.';
@@ -271,6 +436,7 @@
   function bind(){
     $$('.mode-tab').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
     ['currentSavings','monthlySIP','years','annualReturn','annualStepUp','goalToday','goalFuture','targetAmount','inflation'].forEach(id=>$(id).addEventListener('input',render));
+    $('contributionFrequency').addEventListener('change',()=>{frequencyUserOverride=true;updateFrequencyCopy();render();});
     $('goalBasis').addEventListener('change',()=>{syncGoalBasis();render();});
     $('resetBtn').addEventListener('click',reset); $('copyBtn').addEventListener('click',copySummary); $('reportBtn').addEventListener('click',createReport);
   }
