@@ -1,0 +1,6 @@
+Carrowmont PR automation test
+
+Workflow run: 35887166609
+
+This file exists only to verify that the central Carrowmont automation
+can safely create a branch and pull request without modifying main.
