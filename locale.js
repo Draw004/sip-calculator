@@ -7,7 +7,7 @@
   // Country/region profiles control locale-aware formatting and the suggested default currency only.
   // They do not change inflation assumptions, taxes, pensions, benefits or exchange rates.
   const regions = {
-    IN: { label: "India", locale: "en-IN", currency: "INR", contributionFrequency: "monthly", twoWeekLabel: "fortnightly" },
+    IN: { label: "India", locale: "en-IN", currency: "INR", contributionFrequency: "monthly", twoWeekLabel: "neutral" },
     US: { label: "United States", locale: "en-US", currency: "USD", contributionFrequency: "biweekly", twoWeekLabel: "biweekly" },
     CA: { label: "Canada", locale: "en-CA", currency: "CAD", contributionFrequency: "biweekly", twoWeekLabel: "biweekly" },
     GB: { label: "United Kingdom", locale: "en-GB", currency: "GBP", contributionFrequency: "monthly", twoWeekLabel: "fortnightly" },
