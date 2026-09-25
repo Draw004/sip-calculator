@@ -13,7 +13,7 @@
     ['Generate SIP Report', 'Generate Investment Report'],
     ['SIP & MONTHLY INVESTING', 'RECURRING INVESTING & GROWTH'],
     ['SIP &amp; MONTHLY INVESTING', 'RECURRING INVESTING &amp; GROWTH'],
-    ['See how a monthly SIP may grow or what SIP may be required for a goal.', 'See how monthly investments may grow or what monthly investment may be required for a goal.'],
+    ['See how a monthly SIP may grow or what SIP may be required for a goal.', 'See how recurring investments may grow or what recurring investment may be required for a goal.'],
     ['SIP future value', 'Investment future value'],
     ['SIP required for a goal', 'Investment required for a goal'],
     ['Goal SIP snapshot', 'Goal investment snapshot'],
