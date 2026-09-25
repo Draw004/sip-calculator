@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const P=()=>window.CarrowmontPdfExport, L=()=>window.CarrowmontLocale;
+  const P=()=>window.CarrowmontPdfExport, L=()=>window.CarrowmontLocale, S=()=>window.CarrowmontReportStandard;
   const C={ink:'#102945',navy:'#102945',teal:'#0e8b80',tealDark:'#08756d',muted:'#405b75',line:'#c9d9e2',pale:'#e8f6f3',note:'#f3f8fa',amber:'#fff4d9',amberLine:'#edc86b',white:'#fff',light:'#f8fbfc'};
   const W=794,H=1123,M=42,CW=W-M*2;
   const money=v=>L().formatMoney(v,{maximumFractionDigits:0}), compact=v=>L().formatCompactMoney(v,{maximumFractionDigits:2}), pct=v=>`${Math.round(v*100)}%`;
@@ -26,7 +26,7 @@
   const titlePhrase=state=>frequencyNounPhrase(state).replace(/^./,c=>c.toUpperCase());
   const isIndiaReport=()=>L().getRegion()==='IN';
   function page(){return P().createPage({width:W,height:H,scale:2.6,background:'#fff'});}function card(ctx,x,y,w,h,fill=C.white,stroke=C.line,r=10){P().roundRect(ctx,x,y,w,h,r,fill,stroke,1);}function hline(ctx,x1,x2,y,color=C.line,width=1){P().line(ctx,x1,y,x2,y,color,width);}
-  function header(ctx,mode){P().text(ctx,'CARROWMONT',M,48,{size:14,weight:900,color:C.teal});P().text(ctx,'SIP Planning Report',M,82,{size:26,weight:900,color:C.ink});P().text(ctx,mode==='growth'?'Based on: SIP future value':mode==='goal'?'Based on: SIP required for a goal':'Based on: Time to target',M,104,{size:10.5,weight:600,color:C.muted});const d=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(new Date());P().text(ctx,`Generated ${d}`,W-M,48,{size:10,weight:800,color:C.ink,align:'right'});P().text(ctx,'Educational planning report',W-M,68,{size:9.5,weight:400,color:C.muted,align:'right'});P().text(ctx,'carrowmont.com',W-M,88,{size:9.5,weight:400,color:C.muted,align:'right'});hline(ctx,M,W-M,125,C.navy,2);}
+  function header(ctx,mode){const id=S().investmentIdentity();const basedOn=mode==='growth'?(isIndiaReport()?'SIP future value':'Recurring investment future value'):mode==='goal'?(isIndiaReport()?'SIP required for a goal':'Recurring investment required for a goal'):'Time to target';P().text(ctx,'CARROWMONT',M,48,{size:14,weight:900,color:C.teal});P().text(ctx,id.reportTitle,M,82,{size:26,weight:900,color:C.ink});P().text(ctx,`Based on: ${basedOn}`,M,104,{size:10.5,weight:600,color:C.muted});const d=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(new Date());P().text(ctx,`Generated ${d}`,W-M,48,{size:10,weight:800,color:C.ink,align:'right'});P().text(ctx,'Educational planning report',W-M,68,{size:9.5,weight:400,color:C.muted,align:'right'});P().text(ctx,'carrowmont.com',W-M,88,{size:9.5,weight:400,color:C.muted,align:'right'});hline(ctx,M,W-M,125,C.navy,2);}
   function band(ctx,label,y){card(ctx,M,y,CW,31,C.navy,null,8);P().text(ctx,label,M+12,y+21,{size:14,weight:850,color:'#fff'});}
   function statGrid(ctx,items,y,cols=3){const gap=9,w=(CW-gap*(cols-1))/cols,h=72;items.forEach((it,i)=>{const row=Math.floor(i/cols),c=i%cols,x=M+c*(w+gap),yy=y+row*(h+9);card(ctx,x,yy,w,h,C.white,C.line,9);P().wrappedText(ctx,it.label,x+10,yy+19,w-20,{size:9.2,lineHeight:11.5,weight:600,color:C.muted,maxLines:2});P().text(ctx,it.value,x+10,yy+55,{size:14.5,weight:850,color:C.ink});});return y+Math.ceil(items.length/cols)*(h+9)-9;}
   function assumptions(ctx,r,mode,y){
@@ -51,21 +51,7 @@
     rows.forEach(([a,b])=>{P().text(ctx,a,M+7,yy+18,{size:9.3,weight:600,color:C.muted});P().text(ctx,b,W-M-7,yy+18,{size:9.5,weight:850,color:C.ink,align:'right'});hline(ctx,M,M+CW,yy+27);yy+=28;});
     return yy;
   }
-  async function charts(ctx,mode,y){P().text(ctx,mode==='growth'?'SIP growth visuals':mode==='goal'?'Goal and SIP visuals':'Time-to-target visuals',M,y,{size:17,weight:850,color:C.ink});hline(ctx,M,M+CW,y+14,'#c7d3da');const c1=document.getElementById('chart1'),c2=document.getElementById('chart2');const w=(CW-14)/2,h=278,cy=y+28;card(ctx,M,cy,w,h,C.white,C.line,10);card(ctx,M+w+14,cy,w,h,C.white,C.line,10);await P().drawSvgElement(ctx,c1,M+5,cy+5,w-10,h-10);await P().drawSvgElement(ctx,c2,M+w+19,cy+5,w-10,h-10);P().wrappedText(ctx,mode==='growth'?'Left: Projected portfolio value versus the money modelled as invested. Right: Compare the selected annual increase with a fixed contribution under the same return and period.':mode==='goal'?'Left: Compare the future goal with your current-plan path. Right: Compare the current plan with the modelled SIP required to reach the selected goal date.':'Left: Compare your projected SIP path with the target corpus. Right: Compare the annual-increase path with a fixed contribution.',M,cy+h+24,CW,{size:9.3,lineHeight:13,weight:400,color:C.muted,maxLines:3});return cy+h+60;}
-  function methodology(ctx,y,r){
-    const h=238;card(ctx,M,y,CW,h,C.note,C.line,10);
-    P().text(ctx,'Methodology & important information',M+12,y+29,{size:16.5,weight:850,color:C.ink});hline(ctx,M+12,M+CW-12,y+41,'#b9cbd5');
-    const s=r.state,display=frequencyDisplay(s),monthly=s.contributionFrequency==='monthly';
-    const items=[
-      [monthly?'Monthly return:':`${display} return:`,monthly?'The annual return assumption is converted to an equivalent monthly compound rate.':'The annual return assumption is converted to the equivalent compound rate for the selected contribution frequency.'],
-      [L().getRegion()==='IN'?'SIP projection:':'Investment projection:',monthly?'Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.':'Existing investments grow at the equivalent periodic rate. Contributions are added at the end of each selected contribution period and can increase once each year.'],
-      ['Future goal amount:','Either today’s goal amount is grown using the selected price-growth assumption, or a future target amount is entered directly.'],
-      [`${monthly?`Monthly ${contributionNoun()}`:titlePhrase(s)} required:`,monthly?'The starting monthly contribution that models to the selected future goal while applying the entered annual step-up.':'The starting contribution for the selected frequency that models to the selected future goal while applying the entered annual increase.'],
-      ['Time to target:',monthly?'The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.':'The first modelled contribution period in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.']
-    ];
-    let yy=y+66;items.forEach(([label,body])=>{P().text(ctx,label,M+12,yy,{size:9.6,weight:850,color:C.ink});P().wrappedText(ctx,body,M+146,yy,CW-158,{size:9.7,lineHeight:12.8,weight:500,color:C.muted,maxLines:2});yy+=28;});
-    card(ctx,M+12,y+187,CW-24,38,C.white,null,5);P().text(ctx,'Important:',M+22,y+211,{size:9.8,weight:850,color:C.ink});P().wrappedText(ctx,'SIP is a contribution method, not a guaranteed-return product. Actual investment returns, taxes, fees, volatility and product-specific costs may differ materially.',M+83,y+211,CW-105,{size:9.3,lineHeight:12,weight:500,color:C.ink,maxLines:2});
-  }
+  async function charts(ctx,mode,y){const inv=isIndiaReport()?'SIP':'recurring investment';P().text(ctx,mode==='growth'?(isIndiaReport()?'SIP growth visuals':'Recurring investment visuals'):mode==='goal'?(isIndiaReport()?'Goal and SIP visuals':'Goal and investment visuals'):'Time-to-target visuals',M,y,{size:17,weight:850,color:C.ink});hline(ctx,M,M+CW,y+14,'#c7d3da');const c1=document.getElementById('chart1'),c2=document.getElementById('chart2');const w=(CW-14)/2,h=278,cy=y+28;card(ctx,M,cy,w,h,C.white,C.line,10);card(ctx,M+w+14,cy,w,h,C.white,C.line,10);await P().drawSvgElement(ctx,c1,M+5,cy+5,w-10,h-10);await P().drawSvgElement(ctx,c2,M+w+19,cy+5,w-10,h-10);P().wrappedText(ctx,mode==='growth'?'Left: Projected portfolio value versus the money modelled as invested. Right: Compare the selected annual increase with a fixed contribution under the same return and period.':mode==='goal'?`Left: Compare the future goal with your current-plan path. Right: Compare the current plan with the modelled ${inv} required to reach the selected goal date.`:`Left: Compare your projected ${inv} path with the target corpus. Right: Compare the annual-increase path with a fixed contribution.`,M,cy+h+24,CW,{size:9.3,lineHeight:13,weight:400,color:C.muted,maxLines:3});return cy+h+60;}
   function tablePageTitle(ctx,title,subtitle,pageLabel){
     P().text(ctx,'CARROWMONT',M,48,{size:14,weight:900,color:C.teal});
     P().text(ctx,title,M,82,{size:24,weight:900,color:C.ink});
@@ -147,22 +133,28 @@
     return out;
   }
 
-  function otherToolsPage(){
-    const pg=page(),ctx=pg.ctx;
-    P().text(ctx,'CARROWMONT',M,58,{size:15,weight:900,color:C.teal});
-    P().text(ctx,'Continue planning with Carrowmont',M,101,{size:27,weight:900,color:C.ink});
-    P().wrappedText(ctx,'Your SIP calculation is one part of a broader financial plan. Try these other Carrowmont tools to explore retirement, life goals, financial independence and the effect of inflation.',M,130,CW,{size:11,lineHeight:16,weight:500,color:C.muted,maxLines:3});
-    hline(ctx,M,W-M,178,C.navy,2);
-    const tools=[
-      {title:'Retirement Planner',desc:'Model retirement spending, income, current savings and the corpus that may be required for the retirement lifestyle you enter.',url:'carrowmont.com/retirement-calculator/'},
-      {title:'Goal Planner',desc:'Plan for education, a home, travel, emergency savings and other financial goals using future-cost and investment assumptions.',url:'carrowmont.com/goal-planner/'},
-      {title:'Financial Independence',desc:'Estimate a spending-based financial-independence target and compare it with your current investment path and target age.',url:'carrowmont.com/financial-independence/'},
-      {title:'Inflation Calculator',desc:'See how inflation may change future costs and purchasing power across different time horizons and currencies.',url:'carrowmont.com/inflation-calculator/'}
+  function reportGuidePage(r,mode){
+    const s=r.state,id=S().investmentIdentity(),display=frequencyDisplay(s),monthly=s.contributionFrequency==='monthly';
+    const methodology=[
+      [monthly?'Periodic return':`${display} return`,monthly?'The annual return assumption is converted to an equivalent monthly compound rate.':'The annual return assumption is converted to the equivalent compound rate for the selected contribution frequency.'],
+      [isIndiaReport()?'SIP projection':'Investment projection',monthly?'Existing investments grow monthly and the recurring contribution is added at month-end.':'Existing investments grow at the equivalent periodic rate and the contribution is added at the end of each selected contribution period.'],
+      ['Annual increase',`The starting contribution can increase once each year by the entered ${(s.annualStepUp*100).toFixed(1)}% annual rate. A 0% increase keeps the contribution fixed.`],
+      ['Required contribution','For goal mode, the calculator numerically solves for the starting contribution at the selected frequency that models to the future goal under the entered assumptions.'],
+      ['Time to target','The first modelled contribution period in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.']
     ];
-    const gap=16,cw=(CW-gap)/2,ch=162;tools.forEach((t,i)=>{const col=i%2,row=Math.floor(i/2),x=M+col*(cw+gap),y=210+row*(ch+18);card(ctx,x,y,cw,ch,C.white,C.line,13);P().text(ctx,t.title,x+16,y+32,{size:15,weight:900,color:C.ink});P().wrappedText(ctx,t.desc,x+16,y+59,cw-32,{size:10,lineHeight:14,weight:500,color:C.muted,maxLines:4});P().text(ctx,t.url,x+16,y+139,{size:9.5,weight:800,color:C.tealDark});});
-    card(ctx,M,586,CW,78,C.pale,'#b8ddd8',12);P().text(ctx,'Explore all Carrowmont tools',M+16,616,{size:14,weight:900,color:C.tealDark});P().wrappedText(ctx,'Visit carrowmont.com to continue your planning. Carrowmont tools are educational illustrations and do not guarantee financial or investment outcomes.',M+16,641,CW-32,{size:9.7,lineHeight:13.5,weight:500,color:C.ink,maxLines:2});
-    P().text(ctx,'CARROWMONT',M,H-40,{size:10,weight:900,color:C.teal});P().text(ctx,'Financial Planning, Tools & Learning · carrowmont.com',W-M,H-40,{size:9.3,weight:500,color:C.muted,align:'right'});
-    return pg.canvas;
+    const terminology=[
+      [isIndiaReport()?'SIP':'Recurring investment',isIndiaReport()?'A Systematic Investment Plan (SIP) is a recurring contribution method. The report uses SIP terminology prominently for India.':'A repeated investment contribution made on the selected cadence.'],
+      ['Contribution frequency',`${frequencyLabel(s.contributionFrequency)} is the selected investment cadence for this report.`],
+      ['Periodic return','The equivalent compound return for one selected contribution period, derived from the annual return assumption.'],
+      ['Annual step-up / increase','A once-a-year increase in the recurring contribution amount; it does not change the return assumption.'],
+      ['Projected value','The modelled portfolio value from existing investments, future contributions and assumed investment growth.']
+    ];
+    const modeText=mode==='growth'?'Start with the projected future value, then compare total money invested with modelled growth and the fixed-contribution comparison.':mode==='goal'?'Start with the future goal amount and current-plan funding, then review the required and additional contribution figures under the selected assumptions.':'Start with the estimated time to target, then review how much was invested, modelled growth and the fixed-contribution comparison.';
+    return S().guidePage({reportTitle:id.reportTitle,preparedFrom:id.preparedFrom,howToRead:modeText,methodology,terminology,assumptions:'Country and currency selection control display formatting; changing currency does not perform foreign-exchange conversion. Returns are modelled as constant and contributions are assumed at the end of each selected period.',disclaimer:isIndiaReport()?'SIP is a contribution method, not a guaranteed-return product. Actual investment returns, taxes, fees, volatility and product-specific costs may differ materially. This report is educational and is not individualized financial, tax, legal, accounting or investment advice.':'Recurring investing is a contribution method, not a guaranteed-return product. Actual investment returns, taxes, fees, volatility and product-specific costs may differ materially. This report is educational and is not individualized financial, tax, legal, accounting or investment advice.',methodologyMeta:'Current Carrowmont recurring-investment methodology - reviewed September 2026',methodologyUrl:'carrowmont.com/methodology.html',contact:'contact@carrowmont.com'});
+  }
+  function otherToolsPage(){
+    const id=S().investmentIdentity();
+    return S().continuePlanningPage({currentTool:'investment',intro:isIndiaReport()?'Your SIP calculation is one part of a broader financial plan. Try these other Carrowmont tools to explore retirement, life goals, financial independence and the effect of inflation.':'Your recurring-investment calculation is one part of a broader financial plan. Try these other Carrowmont tools to explore retirement, life goals, financial independence and the effect of inflation.'});
   }
 
   async function render(r,mode){
@@ -228,8 +220,8 @@
       const ay=assumptions(c,r,mode,end+26);
       P().wrappedText(c,`This mode solves for time rather than contribution amount. If you instead know the target date and want to calculate the required ${frequencyNounPhrase(s,noun)}, use the investment-required-for-a-goal mode.`,M,ay+25,CW,{size:9.5,lineHeight:13.5,weight:400,color:C.muted,maxLines:3});
     }
-    const p2=page(),c2=p2.ctx;header(c2,mode);const endChart=await charts(c2,mode,154);methodology(c2,endChart+30,r);
-    return [p1.canvas,p2.canvas,...yearlyPages(r,mode),...comparisonPages(r,mode),otherToolsPage()];
+    const p2=page(),c2=p2.ctx;header(c2,mode);await charts(c2,mode,154);
+    return [p1.canvas,p2.canvas,...yearlyPages(r,mode),...comparisonPages(r,mode),reportGuidePage(r,mode),otherToolsPage()];
   }
   window.CarrowmontSIPPdfRenderer={render};
 })();
