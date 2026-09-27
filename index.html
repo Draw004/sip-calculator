@@ -15,7 +15,7 @@
   <meta property="og:url" content="https://carrowmont.com/sip-calculator/" />
   <meta name="twitter:card" content="summary" />
   <meta name="theme-color" content="#0e827a" />
-  <link rel="stylesheet" href="styles.css?v=20260922.5" />
+  <link rel="stylesheet" href="styles.css?v=20260927.1" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont SIP Calculator","url":"https://carrowmont.com/sip-calculator/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational SIP calculator for estimating recurring-investment growth, step-up SIP outcomes and goal-based monthly investment requirements."}</script>
 </head>
 <body>
@@ -210,11 +210,33 @@
 <section class="methodology" id="methodology"><div class="container two-col"><div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div><div><p id="methodRate"><strong>Monthly return:</strong> The annual return assumption is converted to the equivalent monthly compound rate.</p><p id="methodProjection"><strong>SIP projection:</strong> Existing investments grow monthly. Contributions are added at month-end and can increase once each year by the entered step-up rate.</p><p><strong>Future goal amount:</strong> Either today’s goal amount × (1 + inflation / price growth)<sup>years</sup>, or a future target entered directly.</p><p id="methodRequired"><strong>Monthly SIP required:</strong> The starting monthly contribution that would model to the selected future goal while applying the entered annual step-up. It is solved numerically.</p><p id="methodTarget"><strong>Time to target:</strong> The first modelled month in which the projected portfolio equals or exceeds the target corpus, checked for up to 50 years.</p><div class="method-note"><strong>Important:</strong> SIP is a contribution method, not a guaranteed-return product. This calculator does not model market volatility, sequence of returns, taxes, fees, product-specific costs or investment suitability.</div></div></div></section>
 </main>
 
-<footer class="site-footer"><div class="container"><div class="footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/financial-independence/">Financial Independence</a><a href="/sip-calculator/">SIP Calculator</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="footer-bottom"><span>© 2026 Carrowmont</span><span>Educational tools only · No sign-up required</span></div></div></footer>
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand-block"><a class="footer-wordmark" href="/">CARROWMONT</a><strong class="footer-product-name footer-investment-product-name">SIP Calculator</strong><p>Estimate future value, include existing investments, model annual increases, work backwards from a goal, or estimate time to target.</p><span class="footer-small">Educational planning tool &middot; Carrowmont</span></div>
+    <div class="footer-col"><strong>Tools</strong><a class="footer-investment-link" href="/sip-calculator/">SIP Calculator</a><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/financial-independence/">Financial Independence</a><a href="/#tools">All tools</a></div>
+    <div class="footer-col"><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div>
+    <div class="footer-col"><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>
+  </div>
+  <div class="container footer-bottom"><span>&copy; 2026 Carrowmont &middot; <span class="footer-product-bottom footer-current-product">SIP Calculator</span></span><span>Illustrative estimates, not financial advice.</span></div>
+</footer>
 
 <script src="locale.js"></script><script src="core.js?v=20260922.2"></script><script src="pdf-export.js"></script><script src="report-standard.js?v=20260925.2"></script><script src="terminology.js?v=20260922.1"></script>
 <script src="sip-pdf-renderer.js?v=20260925.1"></script>
 <script src="app.js?v=20260925.2"></script>
 <script src="analytics.js?v=1.0.1" data-carrowmont-tool="sip_monthly_investment_calculator" data-track-tool-open="true"></script>
+
+<script>
+(function(){
+  var L=window.CarrowmontLocale; if(!L) return;
+  function syncFooterInvestmentName(){
+    var india=L.getRegion&&L.getRegion()==='IN';
+    var label=india?'SIP Calculator':'Recurring Investment Calculator';
+    document.querySelectorAll('.footer-investment-link').forEach(function(el){el.textContent=label;});
+    document.querySelectorAll('.footer-investment-product-name,.footer-current-product').forEach(function(el){el.textContent=label;});
+  }
+  syncFooterInvestmentName();
+  window.addEventListener('carrowmont:localechange',syncFooterInvestmentName);
+})();
+</script>
 </body>
 </html>
