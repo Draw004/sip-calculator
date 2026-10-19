@@ -90,6 +90,7 @@
   let applying = false;
 
   function applyTextNode(node) {
+    if (node.parentElement?.closest?.('[data-cm-search-identity]')) return;
     if (!originalText.has(node)) originalText.set(node, node.data);
     const source = originalText.get(node);
     const next = isIndia() ? source : text(source);
@@ -110,11 +111,12 @@
   const metaOriginals = new Map();
 
   function applyHead() {
-    document.title = isIndia() ? originalTitle : text(originalTitle);
+    // Keep the canonical search identity stable across locales. Visible calculator terminology still adapts in the page body.
+    document.title = originalTitle;
     document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(meta => {
       if (!metaOriginals.has(meta)) metaOriginals.set(meta, meta.getAttribute('content') || '');
       const source = metaOriginals.get(meta);
-      meta.setAttribute('content', isIndia() ? source : text(source));
+      meta.setAttribute('content', source);
     });
   }
 
@@ -143,6 +145,7 @@
         for (const mutation of mutations) {
           if (mutation.type === 'characterData') {
             const node = mutation.target;
+            if (node.parentElement?.closest?.('[data-cm-search-identity]')) continue;
             if (!originalText.has(node)) originalText.set(node, node.data);
             const source = originalText.get(node);
             const next = isIndia() ? source : text(source);
@@ -150,6 +153,7 @@
           }
           mutation.addedNodes.forEach(added => {
             if (added.nodeType === Node.TEXT_NODE) {
+              if (added.parentElement?.closest?.('[data-cm-search-identity]')) return;
               if (!originalText.has(added)) originalText.set(added, added.data);
               const source = originalText.get(added);
               const next = isIndia() ? source : text(source);
