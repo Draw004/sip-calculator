@@ -7,6 +7,7 @@
   let mode='growth';
   let latestResult=null;
   let frequencyUserOverride=false;
+  let mycmTouched=false;
 
   const defaults={growth:{currentSavings:100000,monthlySIP:10000,years:15,annualReturn:12,annualStepUp:10,goalToday:5000000,goalBasis:'today',goalFuture:10000000,targetAmount:10000000,inflation:6},goal:{currentSavings:500000,monthlySIP:10000,years:15,annualReturn:10,annualStepUp:5,goalToday:5000000,goalBasis:'today',goalFuture:10000000,targetAmount:10000000,inflation:6},target:{currentSavings:500000,monthlySIP:10000,years:15,annualReturn:10,annualStepUp:5,goalToday:5000000,goalBasis:'today',goalFuture:10000000,targetAmount:10000000,inflation:6}};
 
@@ -195,6 +196,7 @@
     syncFrequencyOptions();
     syncGoalBasis();
     updateFrequencyCopy();
+    mycmTouched=false;
     render();
   }
 
@@ -379,6 +381,7 @@
   function render(){
     updateFrequencyCopy();
     const r=Core.result(raw()); latestResult=r; updateSnapshot(r); renderSummary(r); renderCharts(r); renderJourney(r); renderInsights(r); renderScenarios(r);
+    if(mycmTouched) window.CarrowmontPlanSave?.offer?.('recurring-investment');
     const noun=contributionNoun();
     $('visualTitle').textContent=mode==='growth'?`See how the ${noun} may build over time`:mode==='goal'?`See the goal and ${noun} path together`:`See how the current ${noun} may approach your target`;
   }
@@ -446,13 +449,17 @@ Estimated investment growth: ${money(r.growth)}
     }
   }
 
+
+  function applyMyCarrowmontPlan(scenario){const input=scenario?.input;if(!input||typeof input!=='object')return;mode=['growth','goal','target'].includes(input.mode)?input.mode:'growth';Object.entries(input).forEach(([key,value])=>{if(key==='mode')return;const el=$(key);if(el&&value!==undefined)el.value=value;});frequencyUserOverride=true;syncFrequencyOptions();syncGoalBasis();mycmTouched=false;setMode(mode);render();}
+  function configureMyCarrowmontSave(){const bridge=window.CarrowmontPlanSave;if(!bridge?.register)return;bridge.register({journey:'recurring-investment',label:isIndia()?'SIP plan':'Recurring investment plan',toolPath:'/sip-calculator/',anchor:'.snapshot',getPlan:()=>{if(!mycmTouched||!latestResult)return null;const r=latestResult;const label=isIndia()?'SIP plan':'Recurring investment plan';return {journey:'recurring-investment',label,toolPath:'/sip-calculator/',scenario:{input:raw(),summary:{mode,projectedValue:r.projection?.portfolio??r.current?.portfolio??null,target:r.target??null,requiredContribution:r.requiredContribution??null,months:r.months??null}},profileFacts:{}};},applyPlan:applyMyCarrowmontPlan});}
+
   function bind(){
     $$('.mode-tab').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
-    ['currentSavings','monthlySIP','years','annualReturn','annualStepUp','goalToday','goalFuture','targetAmount','inflation'].forEach(id=>$(id).addEventListener('input',render));
-    $('contributionFrequency').addEventListener('change',()=>{frequencyUserOverride=true;updateFrequencyCopy();render();});
-    $('goalBasis').addEventListener('change',()=>{syncGoalBasis();render();});
+    ['currentSavings','monthlySIP','years','annualReturn','annualStepUp','goalToday','goalFuture','targetAmount','inflation'].forEach(id=>$(id).addEventListener('input',()=>{mycmTouched=true;render();}));
+    $('contributionFrequency').addEventListener('change',()=>{frequencyUserOverride=true;mycmTouched=true;updateFrequencyCopy();render();});
+    $('goalBasis').addEventListener('change',()=>{mycmTouched=true;syncGoalBasis();render();});
     $('resetBtn').addEventListener('click',reset); $('copyBtn').addEventListener('click',copySummary); $('reportBtn').addEventListener('click',createReport);
   }
 
-  setupLocale(); bind(); setMode('growth');
+  setupLocale(); configureMyCarrowmontSave(); bind(); setMode('growth');
 })();
